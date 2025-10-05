@@ -1,43 +1,99 @@
 # =========================
-# Visual Studio / .NET
+# Visual Studio / .NET Build Output
 # =========================
 .vs/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
 [Tt]est[Rr]esult*/
-*.suo
+[Bb]uild[Ll]og.*
+*.pdb
+*.obj
+*.tmp
+*.cache
+*.dbmdl
+*.bak
+*.swp
+
+# =========================
+# User / IDE Config
+# =========================
 *.user
+*.suo
 *.userosscache
 *.sln.docstates
-*.cache
-*.pdb
-*.tmp
-
-# =========================
-# App settings (local only)
-# =========================
-appsettings.Development.json
-appsettings.Local.json
-.env
-.env.*
-
-# =========================
-# Rider / VS Code
-# =========================
 .idea/
 .vscode/
 *.code-workspace
-
-# =========================
-# Publish & migrations (optional)
-# =========================
-# Nếu bạn dùng EF Core, KHÔNG nên ignore thư mục Migrations/
-# Migrations/
-publish/
-
-# =========================
-# Others
-# =========================
-Thumbs.db
+.vshistory/
+.localhistory/
 .DS_Store
+Thumbs.db
+
+# =========================
+# App Settings / Secrets
+# (Giữ appsettings.json làm template; không commit file môi trường)
+# =========================
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+appsettings.*.override.json
+# Nếu bạn cấu hình Production qua Render env vars thì KHÔNG nên commit file này:
+# appsettings.Production.json
+.env
+.env.*
+secrets.json
+
+# =========================
+# Containers / Docker / Render
+# =========================
+**/Container/ContainerId.cache
+*.pid
+*.pid.lock
+
+# =========================
+# Publish / Deployment Artifacts
+# =========================
+publish/
+*.Publish.xml
+*.pubxml
+*.publishproj
+PublishScripts/
+artifacts/
+logs/
+
+# =========================
+# Entity Framework / Database
+# (Không ignore Migrations/ để CI/CD apply schema)
+# =========================
+# Migrations/
+*.mdf
+*.ldf
+*.ndf
+
+# =========================
+# Test / Coverage / Tools
+# =========================
+coverage/
+*.coverage
+*.coveragexml
+TestResults/
+TestResult.xml
+nunit-*.xml
+BenchmarkDotNet.Artifacts/
+*.binlog
+stylecop.json
+
+# =========================
+# (Tuỳ chọn) Node / Frontend nếu có thư mục client/
+# =========================
+client/node_modules/
+client/dist/
+client/build/
+client/.parcel-cache/
+client/.next/
+client/.nuxt/
+client/.svelte-kit/
+client/npm-debug.log*
+client/yarn-*.log*
+client/.pnpm-debug.log*
