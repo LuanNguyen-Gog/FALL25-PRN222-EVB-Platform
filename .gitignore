@@ -29,6 +29,8 @@
 .localhistory/
 .DS_Store
 Thumbs.db
+# Editor configuration
+.editorconfig
 
 # =========================
 # App Settings / Secrets
