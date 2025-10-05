@@ -120,3 +120,16 @@ D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\Services.dll
 D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\Services.pdb
 D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\EVBTradingContract.pdb
 D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\Repositories.pdb
+D:\Semester7\SWD392\EVB_project\EVB_Project.API\obj\Debug\net8.0\EVB_Project.API.sourcelink.json
+D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\BCrypt.Net-Next.dll
+D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\Microsoft.Extensions.Configuration.Abstractions.dll
+D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\Microsoft.Extensions.Primitives.dll
+D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\System.Diagnostics.DiagnosticSource.dll
+D:\Semester7\SWD392\EVB_project\EVB_Project.API\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll

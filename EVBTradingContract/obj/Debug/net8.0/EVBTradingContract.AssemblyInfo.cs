@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EVBTradingContract")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+acfe22f9427e8fc8fe942ca3c5faaf248b9a245e")]
 [assembly: System.Reflection.AssemblyProductAttribute("EVBTradingContract")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EVBTradingContract")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

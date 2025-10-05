@@ -11,10 +11,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("5354176f-0236-4630-8d48-7ce96c312ea1")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("EVB_Project.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+acfe22f9427e8fc8fe942ca3c5faaf248b9a245e")]
 [assembly: System.Reflection.AssemblyProductAttribute("EVB_Project.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EVB_Project.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

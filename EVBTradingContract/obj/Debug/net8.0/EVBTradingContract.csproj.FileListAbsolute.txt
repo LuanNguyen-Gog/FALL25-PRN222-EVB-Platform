@@ -9,3 +9,4 @@ D:\Semester7\SWD392\EVB_project\EVBTradingContract\obj\Debug\net8.0\EVBTradingCo
 D:\Semester7\SWD392\EVB_project\EVBTradingContract\obj\Debug\net8.0\refint\EVBTradingContract.dll
 D:\Semester7\SWD392\EVB_project\EVBTradingContract\obj\Debug\net8.0\EVBTradingContract.pdb
 D:\Semester7\SWD392\EVB_project\EVBTradingContract\obj\Debug\net8.0\ref\EVBTradingContract.dll
+D:\Semester7\SWD392\EVB_project\EVBTradingContract\obj\Debug\net8.0\EVBTradingContract.sourcelink.json

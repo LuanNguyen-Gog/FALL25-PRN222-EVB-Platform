@@ -58,7 +58,7 @@ namespace Services.Implement
                     Success = false,
                     Message = ex.Message,
                     Data = null
-                };    
+                };
             }
         }
         public async Task<ApiResponse<UserResponse?>> GetUserById(long userId)

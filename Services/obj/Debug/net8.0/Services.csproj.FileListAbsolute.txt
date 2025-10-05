@@ -15,3 +15,4 @@ D:\Semester7\SWD392\EVB_project\Services\bin\Debug\net8.0\Repositories.dll
 D:\Semester7\SWD392\EVB_project\Services\bin\Debug\net8.0\EVBTradingContract.pdb
 D:\Semester7\SWD392\EVB_project\Services\bin\Debug\net8.0\Repositories.pdb
 D:\Semester7\SWD392\EVB_project\Services\obj\Debug\net8.0\Services.csproj.Up2Date
+D:\Semester7\SWD392\EVB_project\Services\obj\Debug\net8.0\Services.sourcelink.json

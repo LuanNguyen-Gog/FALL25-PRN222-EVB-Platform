@@ -1,6 +1,7 @@
 ﻿using EVBTradingContract.Common;
 using EVBTradingContract.Request;
 using EVBTradingContract.Response;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Repositories.Models;
@@ -11,6 +12,7 @@ namespace EVB_Project.API.Controllers
 {
     [Route("api/users")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;

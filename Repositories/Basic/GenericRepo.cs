@@ -3,6 +3,7 @@ using Repositories.DBContext;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -135,6 +136,14 @@ namespace Repositories.Basic
             return await _context.SaveChangesAsync();
         }
 
+        //Dùng cho Login check user có tồn tại hay không
+        public async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate, bool asNoTracking = true)
+        {
+            var query = _context.Set<T>().AsQueryable();
+            if (asNoTracking)
+                query = query.AsNoTracking();
+            return await query.FirstOrDefaultAsync(predicate);
+        }
         #endregion Separating asign entity and save operators
     }
 }

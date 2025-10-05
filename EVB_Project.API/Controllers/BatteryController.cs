@@ -1,5 +1,6 @@
 ﻿using EVBTradingContract.Common;
 using EVBTradingContract.Request;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Repositories.Models;
@@ -9,6 +10,7 @@ namespace EVB_Project.API.Controllers
 {
     [Route("api/batteries")]
     [ApiController]
+    [Authorize]
     public class BatteryController : ControllerBase
     {
         private readonly IBatteryService _batteryService;
