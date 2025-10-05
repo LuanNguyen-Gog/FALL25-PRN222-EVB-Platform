@@ -2,6 +2,8 @@
   - type: web
     name: evb-api
     env: docker
+    rootDir: .                     # build context = repo root (QUAN TRỌNG)
+    dockerfilePath: EVB_Project.API/Dockerfile
     plan: starter   # or 'free' while testing
     autoDeploy: true
     # Health check (optional but recommended)
