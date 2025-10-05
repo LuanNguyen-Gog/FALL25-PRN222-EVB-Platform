@@ -1,5 +1,6 @@
 ﻿using EVBTradingContract.Request;
 using EVBTradingContract.Response;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interface;
@@ -8,6 +9,7 @@ namespace EVB_Project.API.Controllers
 {
     [Route("api/listings")]
     [ApiController]
+    [Authorize]
     public class ListingController : ControllerBase
     {
         private readonly IListingService _listingService;

@@ -1,0 +1,36 @@
+# Build outputs & IDE junk
+.vs
+**/bin
+**/obj
+**/logs
+**/TestResult*
+**/*.user
+**/*.suo
+**/*.swp
+**/*.tmp
+**/*.pdb
+**/*.dbmdl
+**/*.cache
+
+# Git & local
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Env & secrets (Render dùng Environment Variables)
+.env
+.env.*
+secrets.json
+
+# Publish artifacts (nếu có)
+publish
+artifacts
+
+# Frontend caches (nếu có)
+client/node_modules
+client/.parcel-cache
+client/dist
+client/build
