@@ -1,0 +1,43 @@
+# =========================
+# Visual Studio / .NET
+# =========================
+.vs/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Tt]est[Rr]esult*/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.cache
+*.pdb
+*.tmp
+
+# =========================
+# App settings (local only)
+# =========================
+appsettings.Development.json
+appsettings.Local.json
+.env
+.env.*
+
+# =========================
+# Rider / VS Code
+# =========================
+.idea/
+.vscode/
+*.code-workspace
+
+# =========================
+# Publish & migrations (optional)
+# =========================
+# Nếu bạn dùng EF Core, KHÔNG nên ignore thư mục Migrations/
+# Migrations/
+publish/
+
+# =========================
+# Others
+# =========================
+Thumbs.db
+.DS_Store
