@@ -24,6 +24,11 @@
         value: Require
       - key: NPGSQL_TrustServerCertificate
         value: true
+        # Other environment variables
+      - key: JWT__Key
+        sync: false
+      - key: ApplyMigrations
+        value: true
 
 databases:
   - name: evb-postgres
