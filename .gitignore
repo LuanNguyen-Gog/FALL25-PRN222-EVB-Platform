@@ -36,10 +36,15 @@ Thumbs.db
 # App Settings / Secrets
 # (Giữ appsettings.json làm template; không commit file môi trường)
 # =========================
-appsettings.Development.json
+# Ignore environment overrides, nhưng KHÔNG ignore các file chính
+!appsettings.json
+!appsettings.Development.json
+
+# Chỉ ignore local hoặc override tùy chọn
 appsettings.Local.json
 appsettings.*.local.json
 appsettings.*.override.json
+
 # Nếu bạn cấu hình Production qua Render env vars thì KHÔNG nên commit file này:
 # appsettings.Production.json
 .env

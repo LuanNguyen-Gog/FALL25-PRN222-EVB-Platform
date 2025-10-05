@@ -87,6 +87,16 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// ---- Auto-migrate on startup ----
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<EVBatteryTradingContext>(); // TODO: đổi thành DbContext của bạn, ví dụ EVBatteryTradingContext
+    db.Database.Migrate();
+}
+
+// ---- Health endpoint cho Render ----
+app.MapGet("/health", () => Results.Ok("OK"));
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

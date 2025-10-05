@@ -1,1 +1,28 @@
-﻿
+﻿services:
+  - type: web
+    name: evb-api
+    env: docker
+    plan: starter   # or 'free' while testing
+    autoDeploy: true
+    # Health check (optional but recommended)
+    healthCheckPath: /health
+    envVars:
+      # Bind Kestrel to Render's dynamic PORT
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:${PORT}
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      # Attach DB and inject its connection string to the app
+      - key: ConnectionStrings__Default
+        fromDatabase:
+          name: evb-postgres
+          property: connectionString
+      # If you require SSL (recommended on Render Postgres):
+      - key: NPGSQL_SslMode
+        value: Require
+      - key: NPGSQL_TrustServerCertificate
+        value: true
+
+databases:
+  - name: evb-postgres
+    plan: free
