@@ -17,7 +17,7 @@
       # Attach DB and inject its connection string to the app
       - key: ConnectionStrings__DefaultConnection
         fromDatabase:
-          name: evb-postgres
+          name: evb_postgres
           property: connectionString
       # If you require SSL (recommended on Render Postgres):
       - key: NPGSQL_SslMode
