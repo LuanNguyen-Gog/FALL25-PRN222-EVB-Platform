@@ -14,32 +14,6 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Use connection string from appsettings or DATABASE_URL env
-//var envConn = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
-//if (!string.IsNullOrWhiteSpace(envConn))
-//{
-//    builder.Configuration["ConnectionStrings:DefaultConnection"] = envConn;
-//}
-//else
-//{
-//    var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-//    if (!string.IsNullOrWhiteSpace(databaseUrl))
-//    {
-//        var uri = new Uri(databaseUrl);
-//        var userInfo = uri.UserInfo.Split(':', 2);
-//        var npgsqlConn =
-//            $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};" +
-//            $"Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=True";
-//        builder.Configuration["ConnectionStrings:DefaultConnection"] = npgsqlConn;
-//    }
-//}
-
-// JWT config: only use appsettings.json
-//string jwtKey = builder.Configuration["Jwt:Key"] ?? string.Empty;
-//string jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? string.Empty;
-//string jwtAudience = builder.Configuration["Jwt:Audience"] ?? string.Empty;
-
-// --- 2) ĐĂNG KÝ DỊCH VỤ ---
 // Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
