@@ -27,6 +27,10 @@
         # Other environment variables
       - key: JWT__Key
         sync: false
+      - key: Jwt__Issuer
+        value: EVB-API
+      - key: Jwt__Audience
+        value: EVB-CLIENT
       - key: ApplyMigrations
         value: true
 

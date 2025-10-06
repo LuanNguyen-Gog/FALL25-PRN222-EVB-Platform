@@ -12,6 +12,43 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// a) Connection string: ưu tiên ConnectionStrings__Default; fallback DATABASE_URL (postgres://)
+var envConn = Environment.GetEnvironmentVariable("ConnectionStrings__Default");
+if (!string.IsNullOrWhiteSpace(envConn))
+{
+    builder.Configuration["ConnectionStrings:Default"] = envConn;
+}
+else
+{
+    var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+    if (!string.IsNullOrWhiteSpace(databaseUrl))
+    {
+        var uri = new Uri(databaseUrl);
+        var userInfo = uri.UserInfo.Split(':');
+        var npgsqlConn =
+            $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};" +
+            $"Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=True";
+        builder.Configuration["ConnectionStrings:Default"] = npgsqlConn;
+    }
+}
+
+// b) JWT: hỗ trợ cả 2 kiểu key: Jwt:Key (appsettings hiện tại) hoặc JwtSettings:SecretKey (ENV kiểu cũ)
+string jwtKey =
+    builder.Configuration["Jwt:Key"]
+    ?? builder.Configuration["JwtSettings:SecretKey"]
+    ?? ""; // sẽ check sau để báo lỗi rõ ràng
+
+string jwtIssuer =
+    builder.Configuration["Jwt:Issuer"]
+    ?? builder.Configuration["JwtSettings:Issuer"]
+    ?? "EVB-API";
+
+string jwtAudience =
+    builder.Configuration["Jwt:Audience"]
+    ?? builder.Configuration["JwtSettings:Audience"]
+    ?? "EVB-CLIENT";
+
+// --- 2) ĐĂNG KÝ DỊCH VỤ ---
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -62,7 +99,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add DbContext
 builder.Services.AddDbContext<EVBatteryTradingContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 // Register Mapster mappings
 MapsterConfig.RegisterMappings();
@@ -87,15 +124,38 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// ---- Auto-migrate on startup ----
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<EVBatteryTradingContext>(); // TODO: đổi thành DbContext của bạn, ví dụ EVBatteryTradingContext
-    db.Database.Migrate();
-}
-
 // ---- Health endpoint cho Render ----
 app.MapGet("/health", () => Results.Ok("OK"));
+
+// ---- Auto-migrate on startup (only if ApplyMigrations=true) ----
+if (builder.Configuration.GetValue<bool>("ApplyMigrations", false))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<EVBatteryTradingContext>();
+
+    const int maxRetries = 5;
+    int retries = maxRetries;
+
+    while (true)
+    {
+        try
+        {
+            db.Database.Migrate();
+            Console.WriteLine("✅ Database migrated successfully.");
+            break;
+        }
+        catch (Exception ex) when (retries-- > 0)
+        {
+            Console.WriteLine($"⚠️ Migration failed (retries left: {retries}). Error: {ex.Message}");
+            Thread.Sleep(5000); // 5s chờ DB Render sẵn sàng
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Migration aborted after {maxRetries} attempts. Error: {ex.Message}");
+            break;
+        }
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
