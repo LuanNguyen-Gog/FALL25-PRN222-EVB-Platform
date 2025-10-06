@@ -24,16 +24,13 @@
         value: Require
       - key: NPGSQL_TrustServerCertificate
         value: true
-        # Other environment variables
+      # Other environment variables
       - key: JWT__Key
         sync: false
       - key: Jwt__Issuer
         value: EVB-API
       - key: Jwt__Audience
         value: EVB-CLIENT
+      # Bật auto-migrate khi khởi động (Program.cs đã đọc key này)
       - key: ApplyMigrations
         value: true
-
-databases:
-  - name: evb-postgres
-    plan: free
