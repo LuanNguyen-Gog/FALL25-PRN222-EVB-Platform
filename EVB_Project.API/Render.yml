@@ -11,7 +11,7 @@
     envVars:
       # Bind Kestrel to Render's dynamic PORT
       - key: ASPNETCORE_URLS
-        value: http://0.0.0.0:${PORT}
+        value: http://+:${PORT}
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       # Attach DB and inject its connection string to the app
