@@ -12,11 +12,11 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// a) Connection string: ưu tiên ConnectionStrings__Default; fallback DATABASE_URL (postgres://)
-var envConn = Environment.GetEnvironmentVariable("ConnectionStrings__Default");
+// a) Connection string: ưu tiên ConnectionStrings__DefaultConnection; fallback DATABASE_URL (postgres://)
+var envConn = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
 if (!string.IsNullOrWhiteSpace(envConn))
 {
-    builder.Configuration["ConnectionStrings:Default"] = envConn;
+    builder.Configuration["ConnectionStrings:DefaultConnection"] = envConn;
 }
 else
 {
@@ -24,11 +24,11 @@ else
     if (!string.IsNullOrWhiteSpace(databaseUrl))
     {
         var uri = new Uri(databaseUrl);
-        var userInfo = uri.UserInfo.Split(':');
+        var userInfo = uri.UserInfo.Split(':', 2);
         var npgsqlConn =
             $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};" +
             $"Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=True";
-        builder.Configuration["ConnectionStrings:Default"] = npgsqlConn;
+        builder.Configuration["ConnectionStrings:DefaultConnection"] = npgsqlConn;
     }
 }
 
@@ -99,7 +99,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add DbContext
 builder.Services.AddDbContext<EVBatteryTradingContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register Mapster mappings
 MapsterConfig.RegisterMappings();
@@ -166,7 +166,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 
 app.UseHttpsRedirection();
 
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 // đặt ExceptionMiddleware sớm (trước MapControllers)
