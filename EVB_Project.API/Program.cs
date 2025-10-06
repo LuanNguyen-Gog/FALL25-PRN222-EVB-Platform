@@ -1,8 +1,10 @@
 ﻿using EVB_Project.API.Extensions;
+using EVB_Project.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 using Repositories.DBContext;
 using Repositories.Repository;
 using Services;
@@ -12,45 +14,33 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// a) Connection string: ưu tiên ConnectionStrings__DefaultConnection; fallback DATABASE_URL (postgres://)
-var envConn = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
-if (!string.IsNullOrWhiteSpace(envConn))
-{
-    builder.Configuration["ConnectionStrings:DefaultConnection"] = envConn;
-}
-else
-{
-    var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-    if (!string.IsNullOrWhiteSpace(databaseUrl))
-    {
-        var uri = new Uri(databaseUrl);
-        var userInfo = uri.UserInfo.Split(':', 2);
-        var npgsqlConn =
-            $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};" +
-            $"Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=True";
-        builder.Configuration["ConnectionStrings:DefaultConnection"] = npgsqlConn;
-    }
-}
+// Use connection string from appsettings or DATABASE_URL env
+//var envConn = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+//if (!string.IsNullOrWhiteSpace(envConn))
+//{
+//    builder.Configuration["ConnectionStrings:DefaultConnection"] = envConn;
+//}
+//else
+//{
+//    var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+//    if (!string.IsNullOrWhiteSpace(databaseUrl))
+//    {
+//        var uri = new Uri(databaseUrl);
+//        var userInfo = uri.UserInfo.Split(':', 2);
+//        var npgsqlConn =
+//            $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};" +
+//            $"Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=True";
+//        builder.Configuration["ConnectionStrings:DefaultConnection"] = npgsqlConn;
+//    }
+//}
 
-// b) JWT: hỗ trợ cả 2 kiểu key: Jwt:Key (appsettings hiện tại) hoặc JwtSettings:SecretKey (ENV kiểu cũ)
-string jwtKey =
-    builder.Configuration["Jwt:Key"]
-    ?? builder.Configuration["JwtSettings:SecretKey"]
-    ?? ""; // sẽ check sau để báo lỗi rõ ràng
-
-string jwtIssuer =
-    builder.Configuration["Jwt:Issuer"]
-    ?? builder.Configuration["JwtSettings:Issuer"]
-    ?? "EVB-API";
-
-string jwtAudience =
-    builder.Configuration["Jwt:Audience"]
-    ?? builder.Configuration["JwtSettings:Audience"]
-    ?? "EVB-CLIENT";
+// JWT config: only use appsettings.json
+//string jwtKey = builder.Configuration["Jwt:Key"] ?? string.Empty;
+//string jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? string.Empty;
+//string jwtAudience = builder.Configuration["Jwt:Audience"] ?? string.Empty;
 
 // --- 2) ĐĂNG KÝ DỊCH VỤ ---
 // Add services to the container.
-
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -59,13 +49,12 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
+        Type = SecuritySchemeType.Http,
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Nhập 'Bearer' + khoảng trắng + token"
+        Description = "Enter JWT token"
     });
-
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -84,7 +73,7 @@ builder.Services.AddSwaggerGen(c =>
 
 // đăng ký middleware qua DI
 //Dùng middleware để bắt lỗi toàn cục tránh việc phải try catch ở từng action(controller)
-builder.Services.AddGlobalExceptionHandling();
+builder.Services.AddTransient<GlobalExceptionMiddleware>();
 //Add scoped services
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -99,62 +88,43 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add DbContext
 builder.Services.AddDbContext<EVBatteryTradingContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? builder.Configuration["DATABASE_URL"], npg =>
+    {
+        npg.CommandTimeout(30); // 30s
+    }));
 
 // Register Mapster mappings
 MapsterConfig.RegisterMappings();
 
-// JWT từ appsettings
+// JWT configuration - use only appsettings.json values
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
+        var jwt = builder.Configuration.GetSection("Jwt");
+        var key = jwt["Key"] ?? throw new InvalidOperationException("Jwt:Key is required (set ENV Jwt__Key).");
+
         o.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
-            ClockSkew = TimeSpan.Zero
+            ValidIssuer = jwt["Issuer"] ?? "EVB-API",
+            ValidAudience = jwt["Audience"] ?? "EVB-CLIENT",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
         };
     });
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// ---- Health endpoint cho Render ----
-app.MapGet("/health", () => Results.Ok("OK"));
-
 // ---- Auto-migrate on startup (only if ApplyMigrations=true) ----
 if (builder.Configuration.GetValue<bool>("ApplyMigrations", false))
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<EVBatteryTradingContext>();
-
-    const int maxRetries = 5;
-    int retries = maxRetries;
-
-    while (true)
-    {
-        try
-        {
-            db.Database.Migrate();
-            Console.WriteLine("✅ Database migrated successfully.");
-            break;
-        }
-        catch (Exception ex) when (retries-- > 0)
-        {
-            Console.WriteLine($"⚠️ Migration failed (retries left: {retries}). Error: {ex.Message}");
-            Thread.Sleep(5000); // 5s chờ DB Render sẵn sàng
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Migration aborted after {maxRetries} attempts. Error: {ex.Message}");
-            break;
-        }
-    }
+    db.Database.Migrate();
 }
 
 // Configure the HTTP request pipeline.
@@ -169,9 +139,10 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// đặt ExceptionMiddleware sớm (trước MapControllers)
-app.UseGlobalExceptionHandling();
+// Bắt lỗi sau Auth/Author để không “đổi màu” 401/403 chính thống
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
+app.MapGet("/health", () => Results.Ok("OK")).AllowAnonymous();
 app.MapControllers();
 
 app.Run();
