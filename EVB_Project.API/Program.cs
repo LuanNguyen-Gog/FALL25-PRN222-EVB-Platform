@@ -12,6 +12,11 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+// Add DbContext
+builder.Services.AddDbContext<EVBatteryTradingContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
 // a) Connection string: ưu tiên ConnectionStrings__Default; fallback DATABASE_URL (postgres://)
 var envConn = Environment.GetEnvironmentVariable("ConnectionStrings__Default");
 if (!string.IsNullOrWhiteSpace(envConn))
@@ -96,10 +101,6 @@ builder.Services.AddScoped<ListingRepository>();
 builder.Services.AddScoped<IListingService, ListingService>();
 builder.Services.AddScoped<AuthRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
-// Add DbContext
-builder.Services.AddDbContext<EVBatteryTradingContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 // Register Mapster mappings
 MapsterConfig.RegisterMappings();
