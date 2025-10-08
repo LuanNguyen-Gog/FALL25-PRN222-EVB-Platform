@@ -25,6 +25,12 @@ Thumbs.db
 .env.*
 secrets.json
 
+# Local configs
+appsettings.Development.json
+launchSettings.json
+*.csproj.user
+*.json.user
+
 # Publish artifacts (nếu có)
 publish
 artifacts
