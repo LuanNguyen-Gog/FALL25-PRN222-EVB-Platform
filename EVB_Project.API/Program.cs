@@ -91,6 +91,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+// ✅ CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevCors", p =>
+        p.AllowAnyOrigin()
+         .AllowAnyHeader()
+         .AllowAnyMethod());
+});
+
 var app = builder.Build();
 
 // ---- Auto-migrate on startup (only if ApplyMigrations=true) ----
@@ -105,8 +114,14 @@ if (builder.Configuration.GetValue<bool>("ApplyMigrations", false))
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "EVB_Project.API v1");
+        c.RoutePrefix = "swagger"; // Serve the Swagger UI at the app's root
+    });
 }
+
+app.UseCors("DevCors");
 
 app.UseHttpsRedirection();
 

@@ -34,29 +34,65 @@ Thumbs.db
 
 # =========================
 # App Settings / Secrets
-# (Giữ appsettings.json làm template; không commit file môi trường)
 # =========================
-# Ignore environment overrides, nhưng KHÔNG ignore các file chính
+# Giữ file gốc (template) nhưng bỏ qua các file môi trường
 !appsettings.json
 !appsettings.Development.json
 
-# Chỉ ignore local hoặc override tùy chọn
+# App settings / secrets
 appsettings.Local.json
 appsettings.*.local.json
 appsettings.*.override.json
-
-# Nếu bạn cấu hình Production qua Render env vars thì KHÔNG nên commit file này:
-# appsettings.Production.json
-.env
-.env.*
+appsettings.Production.json
 secrets.json
 
+# Rất quan trọng: không track file Dev thật
+EVB_Project.API/appsettings.Development.json
+
+# User/IDE specific
+*.csproj.user
+*.json.user
+
+# Docker & Render env variables
+.env
+.env.*
+**/.env
+.env.local
+.env.development
+.env.production
+
 # =========================
-# Containers / Docker / Render
+# Docker / Compose / Render
 # =========================
+# Dockerfile & Compose build cache / override
+**/docker-compose.override.yml
+**/docker-compose.local.yml
+**/docker-compose.dev.yml
+**/docker-compose*.log
+**/docker-compose*.bak
+
+# Nếu bạn có folder docker-compose/
+docker-compose/.env
+docker-compose/*.bak
+docker-compose/*.log
+
+# Container runtime data
 **/Container/ContainerId.cache
 *.pid
 *.pid.lock
+
+# Docker volumes (database data)
+**/evb_db_data/
+volumes/
+data/
+tmp/
+logs/
+.dockerignore
+
+# Render build logs
+render.yaml
+render-build.sh
+render-build.log
 
 # =========================
 # Publish / Deployment Artifacts
@@ -68,15 +104,19 @@ publish/
 PublishScripts/
 artifacts/
 logs/
+wwwroot/uploads/
+wwwroot/cache/
 
 # =========================
 # Entity Framework / Database
-# (Không ignore Migrations/ để CI/CD apply schema)
 # =========================
+# Không ignore Migrations/ để CI/CD apply schema
 # Migrations/
 *.mdf
 *.ldf
 *.ndf
+*.sqlite
+*.sqlite3
 
 # =========================
 # Test / Coverage / Tools
@@ -104,3 +144,15 @@ client/.svelte-kit/
 client/npm-debug.log*
 client/yarn-*.log*
 client/.pnpm-debug.log*
+
+# =========================
+# Misc / Temp
+# =========================
+*.log
+*.cache
+*.tmp
+*.bak
+*.zip
+*.tar
+*.tar.gz
+*.7z
