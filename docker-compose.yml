@@ -7,13 +7,6 @@
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: >
-        Host=dpg-d3hr72j3fgac73a1ksb0-a.singapore-postgres.render.com;
-        Port=5432;
-        Database=evb_postgres;
-        Username=evb_postgres_user;
-        Password=yvXL3B7F2mIgibPlHeZrtSulbR82GSYW;
-        SSL Mode=Require;
-        Trust Server Certificate=true
+      ConnectionStrings__DefaultConnection: ${EVB_DB_CONN}
     ports:
       - "8080:8080"
