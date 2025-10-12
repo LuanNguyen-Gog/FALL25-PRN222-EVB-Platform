@@ -156,3 +156,121 @@ client/.pnpm-debug.log*
 *.tar
 *.tar.gz
 *.7z
+
+# === Additions to align with full ASP.NET Core template ===
+
+# Build configurations / architectures
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+
+# NUnit extra
+*.VisualState.xml
+
+# Legacy DNX artifacts
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Toolchain / VC++ generated
+*_i.c
+*_p.c
+*_i.h
+*.ilk
+*.meta
+*.pch
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.svclog
+*.pidb
+*.vspscc
+*.vssscc
+.builds
+*.scc
+
+# ReSharper / JetBrains Rider
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+.idea/
+*.sln.iml
+
+# NCrunch
+_NCrunch_*/
+.*crunch*.local.xml
+nCrunchTemp_*
+
+# Sass cache
+.sass-cache/
+
+# InstallShield
+[Ee]xpress/
+
+# DocProject
+DocProject/buildhelp/
+DocProject/Help/*
+
+# NuGet packages & metadata
+*.nupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+
+# Azure build/emulator
+csx/
+*.build.csdef
+ecf/
+rcf/
+
+# Windows Store packaging
+AppPackages/
+BundleArtifacts/
+Package.StoreAssociation.xml
+_pkginfo.txt
+
+# Cache files (keep cache directories)
+*.[Cc]ache
+!*.[Cc]ache/
+
+# Miscellaneous
+ClientBin/
+*.dbproj.schemaview
+*.jfm
+*.pfx
+orleans.codegen.cs
+
+# Node modules at repo root (in addition to client/)
+node_modules/
+
+# Upgrade/Backup logs
+_UpgradeReport_Files/
+Backup*/
+UpgradeLog*.XML
+UpgradeLog*.htm
+
+# Business Intelligence projects
+*.rdl.data
+*.bim.layout
+*.bim_*.settings
+
+# Microsoft Fakes
+FakesAssemblies/
+
+# Paket / FAKE build system
+.paket/paket.exe
+paket-files/
+.fake/
+
+# Python inside solution
+__pycache__/
+*.pyc
