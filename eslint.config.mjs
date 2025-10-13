@@ -10,7 +10,13 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...compat.extends(
+    "next/core-web-vitals",
+    "next/typescript",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
+    "prettier"
+  ),
   {
     ignores: [
       "node_modules/**",
@@ -19,6 +25,29 @@ const eslintConfig = [
       "build/**",
       "next-env.d.ts",
     ],
+    plugins: {
+      "unused-imports": require("eslint-plugin-unused-imports"),
+    },
+    rules: {
+      "unused-imports/no-unused-imports": "error",
+      "import/order": [
+        "warn",
+        {
+          groups: [
+            ["builtin", "external"],
+            ["internal"],
+            ["parent", "sibling", "index"],
+            ["object", "type"],
+          ],
+          alphabetize: { order: "asc", caseInsensitive: true },
+          "newlines-between": "always",
+          pathGroups: [
+            { pattern: "@/**", group: "internal", position: "before" },
+          ],
+          pathGroupsExcludedImportTypes: ["builtin"],
+        },
+      ],
+    },
   },
 ];
 
