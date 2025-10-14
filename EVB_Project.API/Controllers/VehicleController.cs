@@ -10,7 +10,7 @@ namespace EVB_Project.API.Controllers
 {
     [Route("api/vehicles")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "member")]
     public class VehicleController : ControllerBase
     {
         private readonly IVehicleService _vehicleService;
