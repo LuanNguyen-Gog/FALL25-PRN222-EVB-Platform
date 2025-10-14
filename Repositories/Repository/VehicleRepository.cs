@@ -28,7 +28,7 @@ namespace Repositories.Repository
                 query = query.Where(v => v.Year == vehicle.Year);
             if (vehicle.OdometerKm.HasValue)
                 query = query.Where(v => v.OdometerKm == vehicle.OdometerKm);
-            if (!string.IsNullOrEmpty(vehicle.Status))
+            if (vehicle.Status.HasValue)
                 query = query.Where(v => v.Status == vehicle.Status);
             return query.OrderBy(v => v.VehicleId);
             //cần phải .ToList() ở service để thực thi câu query

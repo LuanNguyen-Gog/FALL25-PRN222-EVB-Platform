@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Repositories.Enum.Enum;
 
 namespace Services.Implement
 {
@@ -43,7 +44,7 @@ namespace Services.Implement
             {
                 var entity = request.Adapt<User>();
                 var createdEntity = await _userRepository.CreateAsync(entity);
-                entity.Status = "Active";
+                entity.Status = UserStatus.Active;
                 return new ApiResponse<UserResponse>()
                 {
                     Success = true,

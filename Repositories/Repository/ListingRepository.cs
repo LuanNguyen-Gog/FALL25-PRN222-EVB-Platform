@@ -32,7 +32,7 @@ namespace Repositories.Repository
                 query = query.Where(b => b.PriceVnd == listing.PriceVnd);
             if (listing.AiSuggestedPriceVnd.HasValue)
                 query = query.Where(b => b.AiSuggestedPriceVnd == listing.AiSuggestedPriceVnd);
-            if (!string.IsNullOrEmpty(listing.Status))
+            if (listing.Status.HasValue)
                 query = query.Where(b => b.Status == listing.Status);
             if (listing.ApprovedBy.HasValue)
                 query = query.Where(b => b.ApprovedBy == listing.ApprovedBy);

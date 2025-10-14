@@ -17,7 +17,7 @@ public partial class Vehicle
     public int? Year { get; set; }
 
     public int? OdometerKm { get; set; }
-    public AssetStatus EntityStatus { get; set; }  // Enum
+    public AssetStatus? Status { get; set; } // Enum
 
     public DateTime CreatedAt { get; set; }
 

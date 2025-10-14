@@ -11,6 +11,7 @@ using Services;
 using Services.Implement;
 using Services.Interface;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +60,8 @@ builder.Services.AddScoped<ListingRepository>();
 builder.Services.AddScoped<IListingService, ListingService>();
 builder.Services.AddScoped<AuthRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // Add DbContext
 builder.Services.AddDbContext<EVBatteryTradingContext>(options =>

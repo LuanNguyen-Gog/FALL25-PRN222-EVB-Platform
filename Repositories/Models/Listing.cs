@@ -23,7 +23,7 @@ public partial class Listing
     public decimal? AiSuggestedPriceVnd { get; set; }
 
     public long? ApprovedBy { get; set; }
-    public ListingStatus EntityStatus { get; set; } // Enum
+    public ListingStatus? Status { get; set; } // Enum
 
     public DateTime? ApprovedAt { get; set; }
 

@@ -379,69 +379,69 @@ public partial class EVBatteryTradingContext : DbContext
     {
         // ----- ENUM → TEXT mapping -----
         modelBuilder.Entity<Order>()
-            .Property(o => o.EntityStatus)
-            .HasColumnName("entity_status")
+            .Property(o => o.Status)
+            .HasColumnName("status")
             .HasConversion(
                 v => v.ToString().ToLower(), // write to DB
                 v => System.Enum.Parse<OrderStatus>(
                     char.ToUpper(v[0]) + v.Substring(1)) // read from DB
-            );
+            ).HasDefaultValue(OrderStatus.Pending);
 
         modelBuilder.Entity<Payment>()
-            .Property(p => p.EntityStatus)
-            .HasColumnName("entity_status")
+            .Property(p => p.Status)
+            .HasColumnName("status")
             .HasConversion(
                 v => v.ToString().ToLower(),
                 v => System.Enum.Parse<PaymentStatus>(
                     char.ToUpper(v[0]) + v.Substring(1))
-            );
+            ).HasDefaultValue(PaymentStatus.Pending);
 
         modelBuilder.Entity<Complaint>()
-            .Property(c => c.EntityStatus)
-            .HasColumnName("entity_status")
+            .Property(c => c.Status)
+            .HasColumnName("status")
             .HasConversion(
                 v => v == ComplaintStatus.InProgress ? "in_progress" : v.ToString().ToLower(),
                 v => v == "in_progress"
                     ? ComplaintStatus.InProgress
                     : System.Enum.Parse<ComplaintStatus>(
                         char.ToUpper(v[0]) + v.Substring(1))
-            );
+            ).HasDefaultValue(ComplaintStatus.Open);
 
         modelBuilder.Entity<User>()
-            .Property(u => u.EntityStatus)
-            .HasColumnName("entity_status")
+            .Property(u => u.Status)
+            .HasColumnName("status")
             .HasConversion(
                 v => v.ToString().ToLower(),
                 v => System.Enum.Parse<UserStatus>(
                     char.ToUpper(v[0]) + v.Substring(1))
-            );
+            ).HasDefaultValue(UserStatus.Active);
 
         modelBuilder.Entity<Vehicle>()
-            .Property(v => v.EntityStatus)
-            .HasColumnName("entity_status")
+            .Property(v => v.Status)
+            .HasColumnName("status")
             .HasConversion(
                 v => v.ToString().ToLower(),
                 v => System.Enum.Parse<AssetStatus>(
                     char.ToUpper(v[0]) + v.Substring(1))
-            );
+            ).HasDefaultValue(AssetStatus.Available);
 
         modelBuilder.Entity<Battery>()
-            .Property(b => b.EntityStatus)
-            .HasColumnName("entity_status")
+            .Property(b => b.Status)
+            .HasColumnName("status")
             .HasConversion(
                 v => v.ToString().ToLower(),
                 v => System.Enum.Parse<AssetStatus>(
                     char.ToUpper(v[0]) + v.Substring(1))
-            );
+            ).HasDefaultValue(AssetStatus.Available);
 
         modelBuilder.Entity<Listing>()
-            .Property(l => l.EntityStatus)
-            .HasColumnName("entity_status")
+            .Property(l => l.Status)
+            .HasColumnName("status")
             .HasConversion(
                 v => v.ToString().ToLower(),
                 v => System.Enum.Parse<ListingStatus>(
                     char.ToUpper(v[0]) + v.Substring(1))
-            );
+            ).HasDefaultValue(ListingStatus.Draft);
     }
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 

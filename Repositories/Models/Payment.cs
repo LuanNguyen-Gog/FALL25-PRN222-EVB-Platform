@@ -13,7 +13,7 @@ public partial class Payment
     public decimal AmountVnd { get; set; }
 
     public string Method { get; set; }
-    public PaymentStatus EntityStatus { get; set; }  // Enum
+    public PaymentStatus? Status { get; set; } // Enum
 
     public DateTime? PaidAt { get; set; }
 

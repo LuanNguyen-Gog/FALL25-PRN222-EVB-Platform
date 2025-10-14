@@ -13,7 +13,7 @@ public partial class Complaint
     public long? UserId { get; set; }
 
     public string Description { get; set; }
-    public ComplaintStatus EntityStatus { get; set; } // Enum
+    public ComplaintStatus? Status { get; set; } // Enum
 
     public DateTime CreatedAt { get; set; }
 

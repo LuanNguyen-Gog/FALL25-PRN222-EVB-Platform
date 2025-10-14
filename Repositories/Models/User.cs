@@ -17,7 +17,7 @@ public partial class User
     public string Phone { get; set; }
 
     public string Role { get; set; }
-    public UserStatus EntityStatus { get; set; } // Enum
+    public UserStatus? Status { get; set; } // Enum
 
     public DateTime CreatedAt { get; set; }
 

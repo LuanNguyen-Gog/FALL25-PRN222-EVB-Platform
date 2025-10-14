@@ -25,7 +25,7 @@ public partial class Battery
     public decimal? NominalVoltageV { get; set; }
 
     public string CompatibilityNote { get; set; }
-    public AssetStatus EntityStatus { get; set; }  // Enum
+    public AssetStatus? Status { get; set; } // Enum
 
     public DateTime CreatedAt { get; set; }
 
