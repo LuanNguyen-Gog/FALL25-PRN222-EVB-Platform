@@ -9,7 +9,7 @@ namespace EVB_Project.API.Controllers
 {
     [Route("api/listings")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "member")]
     public class ListingController : ControllerBase
     {
         private readonly IListingService _listingService;

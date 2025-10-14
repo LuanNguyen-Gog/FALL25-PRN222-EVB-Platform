@@ -28,7 +28,7 @@ namespace Repositories.Repository
                 query = query.Where(u => u.Phone.Contains(user.Phone));
             if (!string.IsNullOrEmpty(user.Role)) // Filter by Role if it's not null or empty
                 query = query.Where(u => u.Role == user.Role);
-            if (!string.IsNullOrEmpty(user.Status)) // Filter by Status if it's not null or empty
+            if (user.Status.HasValue) // Filter by Status if it's not null or empty
                 query = query.Where(u => u.Status == user.Status);
             return query.OrderBy(u => u.UserId);
             //cần phải .ToList() ở service để thực thi câu query

@@ -56,6 +56,7 @@ namespace Services.Implement
 
                 var stored = (user.PasswordHash ?? string.Empty).Trim();
                 var entered = (request.Password ?? string.Empty).Trim();
+                var role = (user.Role ?? string.Empty).Trim();
 
                 if (!string.Equals(entered, stored, StringComparison.Ordinal))
                     return new ApiResponse<AuthResponse>()

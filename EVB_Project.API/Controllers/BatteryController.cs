@@ -10,7 +10,7 @@ namespace EVB_Project.API.Controllers
 {
     [Route("api/batteries")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "member")]
     public class BatteryController : ControllerBase
     {
         private readonly IBatteryService _batteryService;

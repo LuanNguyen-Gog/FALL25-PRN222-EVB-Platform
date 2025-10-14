@@ -36,7 +36,7 @@ namespace Repositories.Repository
                 query = query.Where(b => b.NominalVoltageV == battery.NominalVoltageV);
             if (!string.IsNullOrEmpty(battery.CompatibilityNote))
                 query = query.Where(b => b.CompatibilityNote == battery.CompatibilityNote);
-            if (!string.IsNullOrEmpty(battery.Status))
+            if (battery.Status.HasValue)
                 query = query.Where(b => b.Status == battery.Status);
             return query.OrderBy(b => b.BatteryId);
             //cần phải .ToList() ở service để thực thi câu query

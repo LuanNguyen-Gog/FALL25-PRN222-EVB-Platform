@@ -12,7 +12,7 @@ namespace EVB_Project.API.Controllers
 {
     [Route("api/users")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "admin")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;

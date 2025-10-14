@@ -54,6 +54,10 @@
       {
          "Name": "public.vehicles",
          "ObjectType": 0
+      },
+      {
+         "Name": "public.set_updated_at",
+         "ObjectType": 1
       }
    ],
    "UiHint": null,
