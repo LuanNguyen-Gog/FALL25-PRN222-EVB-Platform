@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Repositories.Models;
 using System;
 using System.Collections.Generic;
 using static Repositories.Enum.Enum;
 
-namespace Repositories.Models;
+namespace Repositories.DBContext;
 
 public partial class EVBatteryTradingContext : DbContext
 {

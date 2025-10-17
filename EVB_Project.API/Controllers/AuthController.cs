@@ -66,4 +66,5 @@ namespace EVB_Project.API.Controllers
             var result = await _auth.RevokeAll(userId, ct);
             return Ok(result);
         }
+    }
 }

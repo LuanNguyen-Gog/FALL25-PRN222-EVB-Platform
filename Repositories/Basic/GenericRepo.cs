@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Repositories;
 using Repositories.DBContext;
 using System;
 using System.Collections.Generic;
@@ -146,9 +147,9 @@ namespace Repositories.Basic
         }
 
         //Hàm viết thêm
-        public DbSet<TEntity> Set<TEntity>()
+        public DbSet<T> Set<T>()
         {
-            return _db.Set<TEntity>();
+            return _db.Set<T>();
         }
 
         public async Task AddAsync<TEntity>(TEntity entity, CancellationToken ct = default)
