@@ -40,6 +40,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "public.refresh_tokens",
+         "ObjectType": 0
+      },
+      {
          "Name": "public.reviews",
          "ObjectType": 0
       },

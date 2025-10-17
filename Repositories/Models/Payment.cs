@@ -1,19 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using static Repositories.Enum.Enum;
 
 namespace Repositories.Models;
 
 public partial class Payment
 {
-    public long PaymentId { get; set; }
+    public Guid Id { get; set; }
 
-    public long OrderId { get; set; }
+    public Guid OrderId { get; set; }
 
     public decimal AmountVnd { get; set; }
 
     public string Method { get; set; }
-    public PaymentStatus? Status { get; set; } // Enum
 
     public DateTime? PaidAt { get; set; }
 

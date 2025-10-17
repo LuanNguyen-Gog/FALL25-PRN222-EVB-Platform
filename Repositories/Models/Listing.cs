@@ -1,18 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using static Repositories.Enum.Enum;
 
 namespace Repositories.Models;
 
 public partial class Listing
 {
-    public long ListingId { get; set; }
+    public Guid Id { get; set; }
 
-    public long SellerId { get; set; }
+    public Guid SellerId { get; set; }
 
-    public long? VehicleId { get; set; }
+    public Guid? VehicleId { get; set; }
 
-    public long? BatteryId { get; set; }
+    public Guid? BatteryId { get; set; }
 
     public string Title { get; set; }
 
@@ -22,8 +21,7 @@ public partial class Listing
 
     public decimal? AiSuggestedPriceVnd { get; set; }
 
-    public long? ApprovedBy { get; set; }
-    public ListingStatus? Status { get; set; } // Enum
+    public Guid? ApprovedBy { get; set; }
 
     public DateTime? ApprovedAt { get; set; }
 

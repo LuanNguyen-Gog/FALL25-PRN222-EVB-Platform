@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using static Repositories.Enum.Enum;
 
 namespace Repositories.Models;
 
 public partial class Battery
 {
-    public long BatteryId { get; set; }
+    public Guid Id { get; set; }
 
-    public long OwnerId { get; set; }
+    public Guid OwnerId { get; set; }
 
     public string Brand { get; set; }
 
@@ -25,7 +24,6 @@ public partial class Battery
     public decimal? NominalVoltageV { get; set; }
 
     public string CompatibilityNote { get; set; }
-    public AssetStatus? Status { get; set; } // Enum
 
     public DateTime CreatedAt { get; set; }
 
