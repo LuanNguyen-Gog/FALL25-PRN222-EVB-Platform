@@ -144,6 +144,32 @@ namespace Repositories.Basic
                 query = query.AsNoTracking();
             return await query.FirstOrDefaultAsync(predicate);
         }
+
+        //Hàm viết thêm
+        public DbSet<TEntity> Set<TEntity>()
+        {
+            return _db.Set<TEntity>();
+        }
+
+        public async Task AddAsync<TEntity>(TEntity entity, CancellationToken ct = default)
+        {
+            await _db.Set<TEntity>().AddAsync(entity, ct);
+        }
+
+        public async Task<int> SaveAsync(CancellationToken ct = default)
+        {
+            return await _db.SaveChangesAsync(ct);
+        }
+
+        public IQueryable<TEntity> Query<TEntity>()
+        {
+            return _db.Set<TEntity>().AsQueryable();
+        }
+
+        public void Remove<TEntity>(TEntity entity)
+        {
+            _db.Set<TEntity>().Remove(entity);
+        }
         #endregion Separating asign entity and save operators
     }
 }

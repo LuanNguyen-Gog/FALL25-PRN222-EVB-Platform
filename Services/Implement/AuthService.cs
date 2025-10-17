@@ -20,44 +20,29 @@ namespace Services.Implement
     public class AuthService : IAuthService
     {
         private readonly AuthRepository _authRepo;
-        private readonly IConfiguration _cfg;
-        public AuthService(AuthRepository authRepo, IConfiguration cfg)
+        private readonly RefreshTokenService _rtService;
+        public AuthService(AuthRepository authRepo, RefreshTokenService rt)
         {
             _authRepo = authRepo;
-            _cfg = cfg;
+            _rtService = rt;
         }
-        public async Task<ApiResponse<AuthResponse>> Login(AuthRequest request)
+
+        public async Task<ApiResponse<AuthResponse>> Login(AuthRequest request, CancellationToken c = default)
         {
             try
             {
-                //var user = await _authRepo.GetUserByEmail(request.Email);
-                //if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-                //    return new ApiResponse<AuthResponse>()
-                //    {
-                //        Success = false,
-                //        Message = "Invalid email or password",
-                //        Data = null
-                //    };
-                //if (!string.Equals(user.Status, "Active", StringComparison.OrdinalIgnoreCase))
-                //    return new ApiResponse<AuthResponse>()
-                //    {
-                //        Success = false,
-                //        Message = "User is not active",
-                //        Data = null
-                //    };
                 var user = await _authRepo.GetUserByEmail(request.Email);
-                if (user == null)
-                    return new ApiResponse<AuthResponse>()
-                    {
-                        Success = false,
-                        Message = "You don't have an account!!!",
-                        Data = null
+                if (user is null)
+                    return new ApiResponse<AuthResponse>() 
+                    { 
+                        Success = false, 
+                        Message = "You don't have an account!!!", 
+                        Data = null 
                     };
 
+                // TODO: Thay bằng verify password hash + salt
                 var stored = (user.PasswordHash ?? string.Empty).Trim();
                 var entered = (request.Password ?? string.Empty).Trim();
-                var role = (user.Role ?? string.Empty).Trim();
-
                 if (!string.Equals(entered, stored, StringComparison.Ordinal))
                     return new ApiResponse<AuthResponse>()
                     {
@@ -66,57 +51,94 @@ namespace Services.Implement
                         Data = null
                     };
 
-                //Lấy cấu hình JWT
-                var key = _cfg["Jwt:Key"]!;
-                var issuer = _cfg["Jwt:Issuer"]!;
-                var audience = _cfg["Jwt:Audience"]!;
-                var minutes = int.Parse(_cfg["Jwt:AccessTokenMinutes"] ?? "30");
-                var expires = DateTime.UtcNow.AddMinutes(minutes);
+                var (access, expUtc) = _rtService.GenerateAccessToken(user, DateTime.UtcNow);
+                var (plainRefresh, _) = await _rtService.IssueAsync(user, c);
 
-                //Khai báo claims
-                var claims = new[]
+                var tokenDto = new TokenResponse
                 {
-                    new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
-                    new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
-                    new Claim(ClaimTypes.Name, user.Name ?? string.Empty),
-                    new Claim(ClaimTypes.Role, user.Role ?? "User"),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                    AccessToken = access,
+                    RefreshToken = plainRefresh,
+                    AccessTokenExpiresAtUtc = expUtc
                 };
 
-                //Tạo signing credentials
-                var creds = new SigningCredentials(
-                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
-                    SecurityAlgorithms.HmacSha256);
+                return Ok(new AuthResponse
+                {
+                    token = tokenDto,
+                    User = user.Adapt<UserResponse>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<UserResponse>()
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Data = null
+                };
+            }
+        }
 
-                //Sinh JWT
-                var jwt = new JwtSecurityToken(
-                    issuer: issuer,
-                    audience: audience,
-                    claims: claims,
-                    notBefore: DateTime.UtcNow,
-                    expires: expires,
-                    signingCredentials: creds);
+        public async Task<ApiResponse<TokenResponse>> Refresh(RefreshTokenRequest request, CancellationToken c = default)
+        {
+            try
+            {
+                var (newAccess, newRefresh, exp) = await _rtService.RotateAsync(request, c);
+                return Ok(new TokenResponse
+                {
+                    AccessToken = newAccess,
+                    RefreshToken = newRefresh,
+                    AccessTokenExpiresAtUtc = exp
+                });
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<UserResponse>()
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Data = null
+                };
+            }
+        }
 
-                var token = new JwtSecurityTokenHandler().WriteToken(jwt);
-
-                //Map entity User -> UserResponse (Mapster)
-                var userLogin = user.Adapt<UserResponse>();
-
-                return new ApiResponse<AuthResponse>
+        public async Task<ApiResponse<bool>> Logout(RefreshTokenRequest request, CancellationToken c = default)
+        {
+            try
+            {
+                await _rtService.RevokeAsync(request, "User logout", c);
+                return new ApiResponse<bool>()
                 {
                     Success = true,
-                    Message = "Login successful",
-                    Data = new AuthResponse
-                    {
-                        AccessToken = token,
-                        ExpiresAtUtc = expires,
-                        User = userLogin
-                    }
+                    Message = "User logout successfully",
+                    Data = true
                 };
             }
             catch (Exception ex)
             {
-                return new ApiResponse<AuthResponse>()
+                return new ApiResponse<UserResponse>()
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Data = null
+                };
+            }
+        }
+
+        public async Task<ApiResponse<bool>> RevokeAll(Guid userId, CancellationToken c = default)
+        {
+            try
+            {
+                var cnt = await _rtService.RevokeAllAsync(userId, "User revoke all", c);
+                return new ApiResponse<bool>()
+                {
+                    Success = true,
+                    Message = "User revoke successfully",
+                    Data = true
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<UserResponse>()
                 {
                     Success = false,
                     Message = ex.Message,
