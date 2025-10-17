@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using static Repositories.Enum.Enum;
 
 namespace Repositories.Models;
 
@@ -16,6 +17,7 @@ public partial class User
     public string Phone { get; set; }
 
     public string Role { get; set; }
+    public UserStatus? Status { get; set; } // Enum
 
     public string ExternalProvider { get; set; }
 

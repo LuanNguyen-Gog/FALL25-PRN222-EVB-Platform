@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using static Repositories.Enum.Enum;
 
 namespace Repositories.Models;
 
@@ -12,6 +13,7 @@ public partial class Complaint
     public Guid? UserId { get; set; }
 
     public string Description { get; set; }
+    public ComplaintStatus? Status { get; set; } // Enum
 
     public DateTime CreatedAt { get; set; }
 

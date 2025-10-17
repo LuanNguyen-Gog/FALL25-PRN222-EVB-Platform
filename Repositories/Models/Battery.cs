@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using static Repositories.Enum.Enum;
 
 namespace Repositories.Models;
 
@@ -24,6 +25,7 @@ public partial class Battery
     public decimal? NominalVoltageV { get; set; }
 
     public string CompatibilityNote { get; set; }
+    public AssetStatus? Status { get; set; } // Enum
 
     public DateTime CreatedAt { get; set; }
 

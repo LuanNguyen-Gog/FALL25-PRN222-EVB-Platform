@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using static Repositories.Enum.Enum;
 
 namespace Repositories.Models;
 
@@ -12,6 +13,7 @@ public partial class Order
     public Guid ListingId { get; set; }
 
     public DateTime OrderDate { get; set; }
+    public OrderStatus? Status { get; set; } // Enum
 
     public DateTime CreatedAt { get; set; }
 

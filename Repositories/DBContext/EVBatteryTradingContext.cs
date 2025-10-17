@@ -1,10 +1,9 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-using Repositories.Models;
 using static Repositories.Enum.Enum;
 
-namespace Repositories.DBContext;
+namespace Repositories.Models;
 
 public partial class EVBatteryTradingContext : DbContext
 {
@@ -25,6 +24,8 @@ public partial class EVBatteryTradingContext : DbContext
 
     public virtual DbSet<Payment> Payments { get; set; }
 
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+
     public virtual DbSet<Review> Reviews { get; set; }
 
     public virtual DbSet<Setting> Settings { get; set; }
@@ -41,11 +42,12 @@ public partial class EVBatteryTradingContext : DbContext
             .HasPostgresEnum("listing_status_enum", new[] { "draft", "pending", "active", "rejected", "sold", "archived" })
             .HasPostgresEnum("order_status_enum", new[] { "pending", "processing", "completed", "cancelled" })
             .HasPostgresEnum("payment_status_enum", new[] { "pending", "success", "failed", "refunded" })
-            .HasPostgresEnum("user_status_enum", new[] { "active", "inactive" });
+            .HasPostgresEnum("user_status_enum", new[] { "active", "inactive" })
+            .HasPostgresExtension("pgcrypto");
 
         modelBuilder.Entity<Battery>(entity =>
         {
-            entity.HasKey(e => e.BatteryId).HasName("batteries_pkey");
+            entity.HasKey(e => e.Id).HasName("batteries_pkey");
 
             entity.ToTable("batteries");
 
@@ -53,7 +55,9 @@ public partial class EVBatteryTradingContext : DbContext
 
             entity.HasIndex(e => e.OwnerId, "idx_batteries_owner");
 
-            entity.Property(e => e.BatteryId).HasColumnName("battery_id");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
             entity.Property(e => e.BatteryCapacityKwh)
                 .HasPrecision(7, 3)
                 .HasColumnName("battery_capacity_kwh");
@@ -86,11 +90,13 @@ public partial class EVBatteryTradingContext : DbContext
 
         modelBuilder.Entity<Complaint>(entity =>
         {
-            entity.HasKey(e => e.ComplaintId).HasName("complaints_pkey");
+            entity.HasKey(e => e.Id).HasName("complaints_pkey");
 
             entity.ToTable("complaints");
 
-            entity.Property(e => e.ComplaintId).HasColumnName("complaint_id");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_at");
@@ -116,13 +122,15 @@ public partial class EVBatteryTradingContext : DbContext
 
         modelBuilder.Entity<Contract>(entity =>
         {
-            entity.HasKey(e => e.ContractId).HasName("contracts_pkey");
+            entity.HasKey(e => e.Id).HasName("contracts_pkey");
 
             entity.ToTable("contracts");
 
             entity.HasIndex(e => e.OrderId, "contracts_order_id_key").IsUnique();
 
-            entity.Property(e => e.ContractId).HasColumnName("contract_id");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
             entity.Property(e => e.ContractFileUrl).HasColumnName("contract_file_url");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
@@ -140,7 +148,7 @@ public partial class EVBatteryTradingContext : DbContext
 
         modelBuilder.Entity<Listing>(entity =>
         {
-            entity.HasKey(e => e.ListingId).HasName("listings_pkey");
+            entity.HasKey(e => e.Id).HasName("listings_pkey");
 
             entity.ToTable("listings");
 
@@ -148,13 +156,15 @@ public partial class EVBatteryTradingContext : DbContext
 
             entity.HasIndex(e => e.BatteryId, "uq_listings_battery_active")
                 .IsUnique()
-                .HasFilter("((battery_id IS NOT NULL) AND (entity_status = ANY (ARRAY['pending'::listing_status_enum, 'active'::listing_status_enum])))");
+                .HasFilter("((battery_id IS NOT NULL) AND (status = ANY (ARRAY['pending'::listing_status_enum, 'active'::listing_status_enum])))");
 
             entity.HasIndex(e => e.VehicleId, "uq_listings_vehicle_active")
                 .IsUnique()
-                .HasFilter("((vehicle_id IS NOT NULL) AND (entity_status = ANY (ARRAY['pending'::listing_status_enum, 'active'::listing_status_enum])))");
+                .HasFilter("((vehicle_id IS NOT NULL) AND (status = ANY (ARRAY['pending'::listing_status_enum, 'active'::listing_status_enum])))");
 
-            entity.Property(e => e.ListingId).HasColumnName("listing_id");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
             entity.Property(e => e.AiSuggestedPriceVnd)
                 .HasPrecision(14)
                 .HasColumnName("ai_suggested_price_vnd");
@@ -199,15 +209,17 @@ public partial class EVBatteryTradingContext : DbContext
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("orders_pkey");
+            entity.HasKey(e => e.Id).HasName("orders_pkey");
 
             entity.ToTable("orders");
 
             entity.HasIndex(e => e.BuyerId, "idx_orders_buyer");
 
-            entity.HasIndex(e => e.ListingId, "uq_orders_listing").IsUnique();
+            entity.HasIndex(e => e.ListingId, "orders_listing_id_key").IsUnique();
 
-            entity.Property(e => e.OrderId).HasColumnName("order_id");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
             entity.Property(e => e.BuyerId).HasColumnName("buyer_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
@@ -233,13 +245,15 @@ public partial class EVBatteryTradingContext : DbContext
 
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.PaymentId).HasName("payments_pkey");
+            entity.HasKey(e => e.Id).HasName("payments_pkey");
 
             entity.ToTable("payments");
 
             entity.HasIndex(e => e.OrderId, "payments_order_id_key").IsUnique();
 
-            entity.Property(e => e.PaymentId).HasColumnName("payment_id");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
             entity.Property(e => e.AmountVnd)
                 .HasPrecision(14)
                 .HasColumnName("amount_vnd");
@@ -261,9 +275,37 @@ public partial class EVBatteryTradingContext : DbContext
                 .HasConstraintName("payments_order_id_fkey");
         });
 
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("refresh_tokens_pkey");
+
+            entity.ToTable("refresh_tokens");
+
+            entity.HasIndex(e => e.ExpiresAt, "idx_refresh_tokens_expires");
+
+            entity.HasIndex(e => e.UserId, "idx_refresh_tokens_user");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.RevokedAt).HasColumnName("revoked_at");
+            entity.Property(e => e.TokenHash)
+                .IsRequired()
+                .HasColumnName("token_hash");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.User).WithMany(p => p.RefreshTokens)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("refresh_tokens_user_id_fkey");
+        });
+
         modelBuilder.Entity<Review>(entity =>
         {
-            entity.HasKey(e => e.ReviewId).HasName("reviews_pkey");
+            entity.HasKey(e => e.Id).HasName("reviews_pkey");
 
             entity.ToTable("reviews");
 
@@ -271,7 +313,9 @@ public partial class EVBatteryTradingContext : DbContext
 
             entity.HasIndex(e => e.OrderId, "reviews_order_id_key").IsUnique();
 
-            entity.Property(e => e.ReviewId).HasColumnName("review_id");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
             entity.Property(e => e.Comment).HasColumnName("comment");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
@@ -312,7 +356,7 @@ public partial class EVBatteryTradingContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("users_pkey");
+            entity.HasKey(e => e.Id).HasName("users_pkey");
 
             entity.ToTable("users");
 
@@ -320,11 +364,21 @@ public partial class EVBatteryTradingContext : DbContext
 
             entity.HasIndex(e => e.Email, "users_email_key").IsUnique();
 
-            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.HasIndex(e => new { e.ExternalProvider, e.ExternalSubject }, "ux_users_provider_sub")
+                .IsUnique()
+                .HasFilter("((external_provider IS NOT NULL) AND (external_subject IS NOT NULL))");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
+            entity.Property(e => e.AvatarUrl).HasColumnName("avatar_url");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_at");
             entity.Property(e => e.Email).HasColumnName("email");
+            entity.Property(e => e.EmailVerified).HasColumnName("email_verified");
+            entity.Property(e => e.ExternalProvider).HasColumnName("external_provider");
+            entity.Property(e => e.ExternalSubject).HasColumnName("external_subject");
             entity.Property(e => e.Name)
                 .IsRequired()
                 .HasColumnName("name");
@@ -341,7 +395,7 @@ public partial class EVBatteryTradingContext : DbContext
 
         modelBuilder.Entity<Vehicle>(entity =>
         {
-            entity.HasKey(e => e.VehicleId).HasName("vehicles_pkey");
+            entity.HasKey(e => e.Id).HasName("vehicles_pkey");
 
             entity.ToTable("vehicles");
 
@@ -349,7 +403,9 @@ public partial class EVBatteryTradingContext : DbContext
 
             entity.HasIndex(e => e.OwnerId, "idx_vehicles_owner");
 
-            entity.Property(e => e.VehicleId).HasColumnName("vehicle_id");
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
             entity.Property(e => e.Brand)
                 .IsRequired()
                 .HasColumnName("brand");
@@ -444,5 +500,4 @@ public partial class EVBatteryTradingContext : DbContext
             ).HasDefaultValue(ListingStatus.Draft);
     }
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
-
 }

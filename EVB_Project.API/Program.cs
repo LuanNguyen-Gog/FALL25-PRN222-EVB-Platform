@@ -1,11 +1,9 @@
-﻿using EVB_Project.API.Extensions;
-using EVB_Project.API.Middleware;
+﻿using EVB_Project.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Npgsql;
-using Repositories.DBContext;
+using Repositories.Models;
 using Repositories.Repository;
 using Services;
 using Services.Implement;
@@ -75,8 +73,12 @@ builder.Services.AddDbContext<EVBatteryTradingContext>(options =>
 MapsterConfig.RegisterMappings();
 
 // JWT configuration - use only appsettings.json values
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(o =>
+builder.Services.AddAuthentication(op => 
+{
+    op.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    op.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    op.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(o =>
     {
         var jwt = builder.Configuration.GetSection("Jwt");
         var key = jwt["Key"] ?? throw new InvalidOperationException("Jwt:Key is required (set ENV Jwt__Key).");
@@ -89,7 +91,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwt["Issuer"] ?? "EVB-API",
             ValidAudience = jwt["Audience"] ?? "EVB-CLIENT",
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+            ClockSkew = TimeSpan.Zero
         };
     });
 builder.Services.AddAuthorization();
