@@ -6,9 +6,9 @@ namespace Repositories.Models;
 
 public partial class Payment
 {
-    public long PaymentId { get; set; }
+    public Guid Id { get; set; }
 
-    public long OrderId { get; set; }
+    public Guid OrderId { get; set; }
 
     public decimal AmountVnd { get; set; }
 

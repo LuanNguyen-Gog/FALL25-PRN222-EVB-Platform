@@ -16,13 +16,13 @@ namespace Repositories.Repository
         public IQueryable<Listing> GetListing(Listing listing)
         {
             var query = _context.Listings.AsQueryable();
-            if (listing.ListingId > 0)
-                query = query.Where(b => b.ListingId == listing.ListingId);
-            if (listing.SellerId > 0)
+            if (listing.Id != Guid.Empty)
+                query = query.Where(b => b.Id == listing.Id);
+            if (listing.SellerId != Guid.Empty)
                 query = query.Where(b => b.SellerId == listing.SellerId);
-            if (listing.VehicleId > 0)
+            if (listing.VehicleId != Guid.Empty)
                 query = query.Where(b => b.VehicleId == listing.VehicleId);
-            if (listing.BatteryId > 0)
+            if (listing.BatteryId != Guid.Empty)
                 query = query.Where(b => b.BatteryId == listing.BatteryId);
             if (!string.IsNullOrEmpty(listing.Title))
                 query = query.Where(b => b.Title == listing.Title);
@@ -36,7 +36,7 @@ namespace Repositories.Repository
                 query = query.Where(b => b.Status == listing.Status);
             if (listing.ApprovedBy.HasValue)
                 query = query.Where(b => b.ApprovedBy == listing.ApprovedBy);
-            return query.OrderBy(b => b.ListingId);
+            return query.OrderBy(b => b.Id);
             //cần phải .ToList() ở service để thực thi câu query
         }
     }

@@ -6,11 +6,11 @@ namespace Repositories.Models;
 
 public partial class Complaint
 {
-    public long ComplaintId { get; set; }
+    public Guid Id { get; set; }
 
-    public long? OrderId { get; set; }
+    public Guid? OrderId { get; set; }
 
-    public long? UserId { get; set; }
+    public Guid? UserId { get; set; }
 
     public string Description { get; set; }
     public ComplaintStatus? Status { get; set; } // Enum

@@ -62,7 +62,7 @@ namespace Services.Implement
                 };
             }
         }
-        public async Task<ApiResponse<UserResponse?>> GetUserById(long userId)
+        public async Task<ApiResponse<UserResponse?>> GetUserById(Guid userId)
         {
             try
             {
@@ -85,7 +85,7 @@ namespace Services.Implement
                 };
             }
         }
-        public async Task<ApiResponse<bool>> DeleteUser(long userId)
+        public async Task<ApiResponse<bool>> DeleteUser(Guid userId)
         {
             try
             {
@@ -109,14 +109,14 @@ namespace Services.Implement
                 };
             }
         }
-        public async Task<ApiResponse<bool>> UpdateUser(long userId, UserRequest user)
+        public async Task<ApiResponse<bool>> UpdateUser(Guid userId, UserRequest user)
         {
             try
             {
                 var existingUser = await _userRepository.GetByIdAsync(userId);
                 if (existingUser == null) throw new Exception("User not found");
                 var updatedUser = user.Adapt<User>();
-                updatedUser.UserId = userId; // Ensure the ID remains unchanged
+                updatedUser.Id = userId; // Ensure the ID remains unchanged
                 await _userRepository.UpdateAsync(updatedUser);
                 return new ApiResponse<bool>()
                 {

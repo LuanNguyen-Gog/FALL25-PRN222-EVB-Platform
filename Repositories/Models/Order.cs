@@ -6,11 +6,11 @@ namespace Repositories.Models;
 
 public partial class Order
 {
-    public long OrderId { get; set; }
+    public Guid Id { get; set; }
 
-    public long BuyerId { get; set; }
+    public Guid BuyerId { get; set; }
 
-    public long ListingId { get; set; }
+    public Guid ListingId { get; set; }
 
     public DateTime OrderDate { get; set; }
     public OrderStatus? Status { get; set; } // Enum

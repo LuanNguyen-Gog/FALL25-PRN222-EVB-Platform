@@ -16,9 +16,9 @@ namespace Repositories.Repository
         public IQueryable<Battery> GetFiltered(Battery battery)
         {
             var query = _context.Batteries.AsQueryable();
-            if (battery.BatteryId > 0)
-                query = query.Where(b => b.BatteryId == battery.BatteryId);
-            if (battery.OwnerId > 0)
+            if (battery.Id != Guid.Empty)
+                query = query.Where(b => b.Id == battery.Id);
+            if (battery.Id != Guid.Empty)
                 query = query.Where(b => b.OwnerId == battery.OwnerId);
             if (!string.IsNullOrEmpty(battery.Brand))
                 query = query.Where(b => b.Brand == battery.Brand);
@@ -38,7 +38,7 @@ namespace Repositories.Repository
                 query = query.Where(b => b.CompatibilityNote == battery.CompatibilityNote);
             if (battery.Status.HasValue)
                 query = query.Where(b => b.Status == battery.Status);
-            return query.OrderBy(b => b.BatteryId);
+            return query.OrderBy(b => b.Id);
             //cần phải .ToList() ở service để thực thi câu query
         }
     }

@@ -5,11 +5,11 @@ namespace Repositories.Models;
 
 public partial class Review
 {
-    public long ReviewId { get; set; }
+    public Guid Id { get; set; }
 
-    public long OrderId { get; set; }
+    public Guid OrderId { get; set; }
 
-    public long ReviewerId { get; set; }
+    public Guid ReviewerId { get; set; }
 
     public int Rating { get; set; }
 

@@ -6,7 +6,7 @@ namespace Repositories.Models;
 
 public partial class User
 {
-    public long UserId { get; set; }
+    public Guid Id { get; set; }
 
     public string Name { get; set; }
 
@@ -18,6 +18,14 @@ public partial class User
 
     public string Role { get; set; }
     public UserStatus? Status { get; set; } // Enum
+
+    public string ExternalProvider { get; set; }
+
+    public string ExternalSubject { get; set; }
+
+    public bool? EmailVerified { get; set; }
+
+    public string AvatarUrl { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
@@ -32,6 +40,8 @@ public partial class User
     public virtual ICollection<Listing> ListingSellers { get; set; } = new List<Listing>();
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+
+    public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
     public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 

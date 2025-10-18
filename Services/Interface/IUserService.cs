@@ -13,8 +13,8 @@ namespace Services.Interface
     {
         Task<PageResponse<UserResponse>> GetAllUsersFiltered(UserFilterRequest request, int page, int pageSize);
         Task<ApiResponse<UserResponse>> CreateUser(UserCreateRequest request);
-        Task<ApiResponse<UserResponse?>> GetUserById(long userId);
-        Task<ApiResponse<bool>> DeleteUser(long userId);
-        Task<ApiResponse<bool>> UpdateUser(long userId, UserRequest user);
+        Task<ApiResponse<UserResponse?>> GetUserById(Guid userId);
+        Task<ApiResponse<bool>> DeleteUser(Guid userId);
+        Task<ApiResponse<bool>> UpdateUser(Guid userId, UserRequest user);
     }
 }

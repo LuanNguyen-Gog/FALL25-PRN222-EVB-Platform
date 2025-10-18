@@ -6,9 +6,9 @@ namespace Repositories.Models;
 
 public partial class Battery
 {
-    public long BatteryId { get; set; }
+    public Guid Id { get; set; }
 
-    public long OwnerId { get; set; }
+    public Guid OwnerId { get; set; }
 
     public string Brand { get; set; }
 

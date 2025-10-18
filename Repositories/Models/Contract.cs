@@ -5,9 +5,9 @@ namespace Repositories.Models;
 
 public partial class Contract
 {
-    public long ContractId { get; set; }
+    public Guid Id { get; set; }
 
-    public long OrderId { get; set; }
+    public Guid OrderId { get; set; }
 
     public string ContractFileUrl { get; set; }
 
