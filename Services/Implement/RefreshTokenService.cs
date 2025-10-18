@@ -30,23 +30,21 @@ namespace Services.Implement
             var entity = new RefreshToken
             {
                 Id = Guid.NewGuid(),
-                UserId = user.UserId,
+                UserId = user.Id,
                 TokenHash = Hash(plain),
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddDays(int.Parse(_cfg["Jwt:RefreshTokenDays"] ?? "7")),
                 RevokedAt = null
             };
 
-            await _repo.AddRefreshTokenAsync(entity, c);
+            await _repo.AddRefreshTokenAsync(entity, c); // Add + Save gọn nhất
             return (plain, entity);
         }
 
         public async Task<(string NewAccess, string NewRefresh, DateTime AccessExpUtc)> RotateAsync(string refreshTokenPlain, CancellationToken c = default)
         {
             var hash = Hash(refreshTokenPlain);
-            var rt = await _db.Set<RefreshToken>()
-                              .Include(x => x.User)
-                              .FirstOrDefaultAsync(x => x.TokenHash == hash, c);
+            var rt = await _repo.FindByHashAsync(hash, c);
 
             if (rt is null || rt.RevokedAt != null || rt.ExpiresAt <= DateTime.UtcNow)
                 throw new UnauthorizedAccessException("Invalid or expired refresh token");
@@ -54,44 +52,33 @@ namespace Services.Implement
             // revoke old
             rt.RevokedAt = DateTime.UtcNow;
 
-            // issue new
-            var (newPlainRt, _) = await IssueAsync(rt.User, c);
-            var (access, expUtc) = GenerateAccessToken(rt.User, DateTime.UtcNow);
+            // Issue new refresh
+            var (newPlainRt, u) = await IssueAsync(rt.User!, c);
 
-            await _repo.SaveAsync(c);
+            // New access
+            var (access, expUtc) = GenerateAccessToken(rt.User!, DateTime.UtcNow);
+
+            await _repo.SaveAsync();// lưu RevokedAt của token cũ
             return (access, newPlainRt, expUtc);
         }
 
         public async Task RevokeAsync(string refreshTokenPlain, string? reason = null, CancellationToken c = default)
         {
             var hash = Hash(refreshTokenPlain);
-            var rt = await _db.Set<RefreshToken>().FirstOrDefaultAsync(x => x.TokenHash == hash, c);
+            var rt = await _repo.FindByHashAsync(hash, c);
             if (rt == null) return;
             rt.RevokedAt = DateTime.UtcNow;
-            await _repo.SaveAsync(c);
+            await _repo.SaveAsync();
         }
 
         public async Task<int> RevokeAllAsync(Guid userId, string? reason = null, CancellationToken c = default)
         {
-            var list = await _db.Set<RefreshToken>()
-                .Where(x => x.UserId == userId && x.RevokedAt == null && x.ExpiresAt > DateTime.UtcNow)
-                .ToListAsync(c);
+            var list = await _repo.GetActiveByUserAsync(userId, c);
+
             foreach (var rt in list) rt.RevokedAt = DateTime.UtcNow;
-            await _repo.SaveAsync(c);
+
+            await _repo.SaveAsync();
             return list.Count;
-        }
-
-        private static string GenerateSecureToken()
-        {
-            var bytes = RandomNumberGenerator.GetBytes(64);
-            return Convert.ToBase64String(bytes);
-        }
-
-        private static string Hash(string input)
-        {
-            using var sha = SHA256.Create();
-            var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(input));
-            return Convert.ToBase64String(bytes);
         }
         public (string Token, DateTime ExpiresUtc) GenerateAccessToken(User user, DateTime nowUtc)
         {
@@ -103,7 +90,7 @@ namespace Services.Implement
 
             var claims = new List<Claim>
             {
-                new(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+                new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
                 new(ClaimTypes.Name, user.Name ?? string.Empty),
                 new(ClaimTypes.Role, user.Role ?? "User"),
@@ -124,6 +111,19 @@ namespace Services.Implement
 
             var token = new JwtSecurityTokenHandler().WriteToken(jwt);
             return (token, expires);
+        }
+        // ==== Helpers (private) ====
+        private static string GenerateSecureToken()
+        {
+            var bytes = RandomNumberGenerator.GetBytes(64);
+            return Convert.ToBase64String(bytes);
+        }
+
+        private static string Hash(string input)
+        {
+            using var sha = SHA256.Create();
+            var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(input));
+            return Convert.ToBase64String(bytes);
         }
     }
 }

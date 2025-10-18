@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Services.Implement;
 using Services.Interface;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace EVB_Project.API.Controllers
@@ -25,6 +26,9 @@ namespace EVB_Project.API.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<ApiResponse<AuthResponse>>> Login([FromBody] AuthRequest request)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(new ApiResponse<AuthResponse> { Success = false, Message = "Invalid payload", Data = null });
+
             var response = await _auth.Login(request);
             if (!response.Success)
             {
@@ -34,8 +38,10 @@ namespace EVB_Project.API.Controllers
         }
         [HttpPost("refresh")]
         [AllowAnonymous]
-        public async Task<ActionResult<ApiResponse<TokenResponse>>> Refresh([FromBody] RefreshRequest request, CancellationToken c)
+        public async Task<ActionResult<ApiResponse<TokenResponse>>> Refresh([FromBody] RefreshTokenRequest request, CancellationToken c)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(new ApiResponse<TokenResponse> { Success = false, Message = "Invalid payload", Data = null });
             var response = await _auth.Refresh(request, c);
             if (!response.Success)
             {
@@ -45,26 +51,35 @@ namespace EVB_Project.API.Controllers
         }
         [HttpPost("logout")]
         [AllowAnonymous] // logout chỉ cần refresh token
-        public async Task<ActionResult<ApiResponse<bool>>> Logout([FromBody] RefreshRequest request, CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<bool>>> Logout([FromBody] RefreshTokenRequest request, CancellationToken ct)
         {
-            var result = await _auth.Logout(request, ct);
-            return Ok(result);
+            var response = await _auth.Logout(request, c);
+            if (!response.Success)
+                return Unauthorized(response);
+
+            return Ok(response);
         }
         [HttpPost("revoke-all")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<int>>> RevokeAll(CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<bool>>> RevokeAll(CancellationToken ct)
         {
-            // Lấy userId từ AccessToken (JWT)
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-            if (!Guid.TryParse(userIdClaim, out var userId))
-                return Unauthorized(new ApiResponse<int>
+            // Lấy userId từ JWT: ưu tiên 'sub', fallback 'nameidentifier'
+            var userIdStr = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                           ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+            {
+                return Unauthorized(new ApiResponse<bool>
                 {
                     Success = false,
                     Message = "Invalid token or missing user id",
-                    Data = 0
+                    Data = false
                 });
-            var result = await _auth.RevokeAll(userId, ct);
-            return Ok(result);
+            }
+            var response = await _auth.RevokeAll(userId, c);
+            if (!response.Success)
+                return Unauthorized(response);
+
+            return Ok(response);
         }
     }
 }

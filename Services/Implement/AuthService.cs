@@ -33,11 +33,11 @@ namespace Services.Implement
             {
                 var user = await _authRepo.GetUserByEmail(request.Email);
                 if (user is null)
-                    return new ApiResponse<AuthResponse>() 
-                    { 
-                        Success = false, 
-                        Message = "You don't have an account!!!", 
-                        Data = null 
+                    return new ApiResponse<AuthResponse>()
+                    {
+                        Success = false,
+                        Message = "You don't have an account!!!",
+                        Data = null
                     };
 
                 // TODO: Thay bằng verify password hash + salt
@@ -51,6 +51,7 @@ namespace Services.Implement
                         Data = null
                     };
 
+                // Tạo access token + refresh token
                 var (access, expUtc) = _rtService.GenerateAccessToken(user, DateTime.UtcNow);
                 var (plainRefresh, _) = await _rtService.IssueAsync(user, c);
 
@@ -58,18 +59,25 @@ namespace Services.Implement
                 {
                     AccessToken = access,
                     RefreshToken = plainRefresh,
-                    AccessTokenExpiresAtUtc = expUtc
+                    AccessTokenExpires = expUtc
                 };
 
-                return Ok(new AuthResponse
+                var authResponse = new AuthResponse
                 {
                     token = tokenDto,
                     User = user.Adapt<UserResponse>()
-                });
+                };
+                return new ApiResponse<AuthResponse>()
+                {
+                    Success = true,
+                    Message = "Login successfully",
+                    Data = authResponse
+                };
+
             }
             catch (Exception ex)
             {
-                return new ApiResponse<UserResponse>()
+                return new ApiResponse<AuthResponse>
                 {
                     Success = false,
                     Message = ex.Message,
@@ -77,22 +85,29 @@ namespace Services.Implement
                 };
             }
         }
-
+        // ==== REFRESH TOKEN ====
         public async Task<ApiResponse<TokenResponse>> Refresh(RefreshTokenRequest request, CancellationToken c = default)
         {
             try
             {
-                var (newAccess, newRefresh, exp) = await _rtService.RotateAsync(request, c);
-                return Ok(new TokenResponse
+                var (newAccess, newRefresh, exp) = await _rtService.RotateAsync(request.RefreshToken, c);
+
+                var tokenResponse = new TokenResponse
                 {
                     AccessToken = newAccess,
                     RefreshToken = newRefresh,
-                    AccessTokenExpiresAtUtc = exp
-                });
+                    AccessTokenExpires = exp
+                };
+                return new ApiResponse<TokenResponse>
+                {
+                    Success = true,
+                    Message = "Token refreshed successfully.",
+                    Data = tokenResponse
+                };
             }
             catch (Exception ex)
             {
-                return new ApiResponse<UserResponse>()
+                return new ApiResponse<TokenResponse>
                 {
                     Success = false,
                     Message = ex.Message,
@@ -100,12 +115,12 @@ namespace Services.Implement
                 };
             }
         }
-
+        // ==== LOGOUT ====
         public async Task<ApiResponse<bool>> Logout(RefreshTokenRequest request, CancellationToken c = default)
         {
             try
             {
-                await _rtService.RevokeAsync(request, "User logout", c);
+                await _rtService.RevokeAsync(request.RefreshToken, "User logout", c);
                 return new ApiResponse<bool>()
                 {
                     Success = true,
@@ -115,15 +130,15 @@ namespace Services.Implement
             }
             catch (Exception ex)
             {
-                return new ApiResponse<UserResponse>()
+                return new ApiResponse<bool>()
                 {
                     Success = false,
                     Message = ex.Message,
-                    Data = null
+                    Data = false
                 };
             }
         }
-
+        // ==== REVOKE ALL TOKENS ====
         public async Task<ApiResponse<bool>> RevokeAll(Guid userId, CancellationToken c = default)
         {
             try
@@ -138,11 +153,11 @@ namespace Services.Implement
             }
             catch (Exception ex)
             {
-                return new ApiResponse<UserResponse>()
+                return new ApiResponse<bool>()
                 {
                     Success = false,
                     Message = ex.Message,
-                    Data = null
+                    Data = false
                 };
             }
         }

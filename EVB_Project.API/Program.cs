@@ -58,6 +58,11 @@ builder.Services.AddScoped<ListingRepository>();
 builder.Services.AddScoped<IListingService, ListingService>();
 builder.Services.AddScoped<AuthRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+builder.Services.AddScoped<TokenRepository>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+
+// Configure JSON options to use string enums
 builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 

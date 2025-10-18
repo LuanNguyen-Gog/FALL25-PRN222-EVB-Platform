@@ -16,9 +16,9 @@ namespace Repositories.Repository
         public IQueryable<Vehicle> GetFiltered(Vehicle vehicle)
         {
             var query = _context.Vehicles.AsQueryable();
-            if (vehicle.VehicleId > 0)
-                query = query.Where(v => v.VehicleId == vehicle.VehicleId);
-            if (vehicle.OwnerId > 0)
+            if (vehicle.Id != Guid.Empty)
+                query = query.Where(v => v.Id == vehicle.Id);
+            if (vehicle.OwnerId != Guid.Empty)
                 query = query.Where(v => v.OwnerId == vehicle.OwnerId);
             if (!string.IsNullOrEmpty(vehicle.Brand))
                 query = query.Where(v => v.Brand == vehicle.Brand);
@@ -30,7 +30,7 @@ namespace Repositories.Repository
                 query = query.Where(v => v.OdometerKm == vehicle.OdometerKm);
             if (vehicle.Status.HasValue)
                 query = query.Where(v => v.Status == vehicle.Status);
-            return query.OrderBy(v => v.VehicleId);
+            return query.OrderBy(v => v.Id);
             //cần phải .ToList() ở service để thực thi câu query
         }
     }

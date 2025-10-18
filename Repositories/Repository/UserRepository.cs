@@ -16,10 +16,10 @@ namespace Repositories.Repository
         public IQueryable<User> GetFiltered(User user)
         {
             var query = _context.Users.AsQueryable();
-            if (user.UserId > 0)// Filter by UserId if it's greater than 0
+            if (user.Id != Guid.Empty)// Filter by UserId if it's greater than 0
                 //AsQueryable() thêm vào để có công thức query động, và khi chưa biết cần điều kiện nào để query
                 //Điều kiện nào cần thì thêm vào sau, không query lên danh sách ngay
-                query = query.Where(u => u.UserId == user.UserId);
+                query = query.Where(u => u.Id == user.Id);
             if (!string.IsNullOrEmpty(user.Name)) // Filter by Name if it's not null or empty
                 query = query.Where(u => u.Name.Contains(user.Name));
             if (!string.IsNullOrEmpty(user.Email)) // Filter by Email if it's not null or empty
@@ -30,7 +30,7 @@ namespace Repositories.Repository
                 query = query.Where(u => u.Role == user.Role);
             if (user.Status.HasValue) // Filter by Status if it's not null or empty
                 query = query.Where(u => u.Status == user.Status);
-            return query.OrderBy(u => u.UserId);
+            return query.OrderBy(u => u.Id);
             //cần phải .ToList() ở service để thực thi câu query
         }
     }

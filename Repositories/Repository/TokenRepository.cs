@@ -14,17 +14,25 @@ namespace Repositories.Repository
         public TokenRepository(DBContext.EVBatteryTradingContext context) : base(context)
         {
         }
+        // Thêm refresh token và lưu xuống DB
         public async Task AddRefreshTokenAsync(RefreshToken entity, CancellationToken ct = default)
         {
-            await AddAsync(entity, ct);
-            await SaveAsync(ct);
+            await CreateAsync(entity);
         }
-
-        //public async Task<RefreshToken?> FindByHashAsync(string hash, CancellationToken ct = default)
-        //{
-        //    return await Query<RefreshToken>()
-        //        .Include(x => x.User)
-        //        .FirstOrDefaultAsync(x => x.TokenHash == hash, ct);
-        //}
+        // Lấy token theo hash (kèm User).
+        public async Task<RefreshToken?> FindByHashAsync(string hash, CancellationToken ct = default)
+        {
+            return await _context.Set<RefreshToken>()
+                .Include(x => x.User)
+                .FirstOrDefaultAsync(x => x.TokenHash == hash, ct);
+        }
+        // Lấy danh sách token còn hiệu lực (chưa revoke, chưa hết hạn) theo UserId.
+        public async Task<List<RefreshToken>> GetActiveByUserAsync(Guid userId, CancellationToken ct = default)
+        {
+            var now = DateTime.UtcNow;
+            return await _context.Set<RefreshToken>()
+                .Where(x => x.UserId == userId && x.RevokedAt == null && x.ExpiresAt > now)
+                .ToListAsync(ct);
+        }
     }
 }
