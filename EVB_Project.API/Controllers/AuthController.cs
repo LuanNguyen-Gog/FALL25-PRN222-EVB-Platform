@@ -51,7 +51,7 @@ namespace EVB_Project.API.Controllers
         }
         [HttpPost("logout")]
         [AllowAnonymous] // logout chỉ cần refresh token
-        public async Task<ActionResult<ApiResponse<bool>>> Logout([FromBody] RefreshTokenRequest request, CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<bool>>> Logout([FromBody] RefreshTokenRequest request, CancellationToken c)
         {
             var response = await _auth.Logout(request, c);
             if (!response.Success)
@@ -61,7 +61,7 @@ namespace EVB_Project.API.Controllers
         }
         [HttpPost("revoke-all")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<bool>>> RevokeAll(CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<bool>>> RevokeAll(CancellationToken c)
         {
             // Lấy userId từ JWT: ưu tiên 'sub', fallback 'nameidentifier'
             var userIdStr = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
