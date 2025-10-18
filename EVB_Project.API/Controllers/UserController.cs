@@ -37,7 +37,7 @@ namespace EVB_Project.API.Controllers
         }
         [HttpGet]
         [Route("{userId:long}")]
-        public async Task<ActionResult<ApiResponse<UserResponse>>> GetUserById([FromRoute] long userId)
+        public async Task<ActionResult<ApiResponse<UserResponse>>> GetUserById([FromRoute] Guid userId)
         {
             var result = await _userService.GetUserById(userId);
             if (result == null) return NotFound();
@@ -45,13 +45,13 @@ namespace EVB_Project.API.Controllers
         }
         [HttpDelete]
         [Route("{userId:long}")]
-        public async Task<ApiResponse<bool>> DeleteUser([FromRoute] long userId)
+        public async Task<ApiResponse<bool>> DeleteUser([FromRoute] Guid userId)
         {
             return await _userService.DeleteUser(userId);
         }
         [HttpPut]
         [Route("{userId:long}")]
-        public async Task<ApiResponse<bool>> UpdateUser([FromRoute] long userId, [FromBody] UserRequest request)
+        public async Task<ApiResponse<bool>> UpdateUser([FromRoute] Guid userId, [FromBody] UserRequest request)
         {
             return await _userService.UpdateUser(userId, request);
         }
