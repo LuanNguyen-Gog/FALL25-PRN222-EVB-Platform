@@ -38,7 +38,7 @@ namespace Repositories.Repository
                 query = query.Where(b => b.CompatibilityNote == battery.CompatibilityNote);
             if (battery.Status.HasValue)
                 query = query.Where(b => b.Status == battery.Status);
-            return query.OrderBy(b => b.BatteryId);
+            return query.OrderBy(b => b.Id);
             //cần phải .ToList() ở service để thực thi câu query
         }
     }
