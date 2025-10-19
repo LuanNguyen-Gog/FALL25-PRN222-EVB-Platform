@@ -8,9 +8,9 @@ namespace EVBTradingContract.Response
 {
     public class BatteryResponse
     {
-        public long BatteryId { get; set; }
+        public Guid BatteryId { get; set; }
 
-        public long OwnerId { get; set; }
+        public Guid OwnerId { get; set; }
 
         public string Brand { get; set; }
 
@@ -28,7 +28,7 @@ namespace EVBTradingContract.Response
 
         public string CompatibilityNote { get; set; }
 
-        public string Status { get; set; }
+        public string? Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

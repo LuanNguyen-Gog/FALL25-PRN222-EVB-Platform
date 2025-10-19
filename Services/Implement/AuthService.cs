@@ -21,10 +21,10 @@ namespace Services.Implement
     {
         private readonly AuthRepository _authRepo;
         private readonly RefreshTokenService _rtService;
-        public AuthService(AuthRepository authRepo, RefreshTokenService rt)
+        public AuthService(AuthRepository authRepo, RefreshTokenService rtService)
         {
             _authRepo = authRepo;
-            _rtService = rt;
+            _rtService = rtService;
         }
 
         public async Task<ApiResponse<AuthResponse>> Login(AuthRequest request, CancellationToken c = default)
@@ -50,6 +50,17 @@ namespace Services.Implement
                         Message = "Invalid email or password!!!",
                         Data = null
                     };
+
+                var userDto = new UserResponse
+                {
+                    UserId = user.Id,
+                    Name = user.Name,
+                    Email = user.Email,
+                    Role = user.Role,
+                    AvatarUrl = string.IsNullOrWhiteSpace(user.AvatarUrl) ? null : user.AvatarUrl,
+                    Status = user.Status.ToString(),
+                    CreatedAt = user.CreatedAt
+                };
 
                 // Tạo access token + refresh token
                 var (access, expUtc) = _rtService.GenerateAccessToken(user, DateTime.UtcNow);

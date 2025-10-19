@@ -8,6 +8,7 @@ using Repositories.Repository;
 using Services;
 using Services.Implement;
 using Services.Interface;
+using Services.Mapping;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -60,6 +61,7 @@ builder.Services.AddScoped<AuthRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddScoped<TokenRepository>();
+builder.Services.AddScoped<RefreshTokenService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
 // Configure JSON options to use string enums
@@ -93,13 +95,13 @@ builder.Services.AddAuthentication(op =>
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["key"]!)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
             ClockSkew = TimeSpan.FromSeconds(30)
         };
     });
 builder.Services.AddAuthorization();
 
-// ✅ CORS
+//CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", p =>
@@ -109,6 +111,8 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionMiddleware>(); // ← đặt sớm nhất có thể
 
 // ---- Auto-migrate on startup (only if ApplyMigrations=true) ----
 if (builder.Configuration.GetValue<bool>("ApplyMigrations", false))
@@ -131,13 +135,10 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 
 app.UseCors("DevCors");
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Bắt lỗi sau Auth/Author để không “đổi màu” 401/403 chính thống
-app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.MapGet("/health", () => Results.Ok("OK")).AllowAnonymous();
 app.MapControllers();

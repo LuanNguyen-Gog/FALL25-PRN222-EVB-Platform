@@ -1,9 +1,11 @@
 ﻿// Api/Middleware/GlobalExceptionMiddleware.cs
-using System.Net;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using Services.Exceptions;
+using System.Net;
+using System.Net.Sockets;
+using System.Text.Json;
 
 namespace EVB_Project.API.Middleware
 {
@@ -31,14 +33,29 @@ namespace EVB_Project.API.Middleware
 
         private async Task HandleAsync(HttpContext ctx, Exception ex)
         {
-            if (ctx.Response.HasStarted)
-                return;
+            if (ctx.Response.HasStarted) return;
 
             var traceId = ctx.TraceIdentifier;
-            var status = StatusCodes.Status500InternalServerError;
-            var title = "Internal Server Error";
-            string? detail = _env.IsDevelopment() ? ex.Message : "An unexpected error occurred.";
-            object? extensions = new { traceId };
+            var (status, title, detail) = (StatusCodes.Status500InternalServerError,
+                                           "Internal Server Error",
+                                           _env.IsDevelopment() ? ex.Message : "An unexpected error occurred.");
+
+            // --- Nhận diện lỗi tạm thời hạ tầng (DNS/Socket/Pool/Timeout) → 503 ---
+            bool IsTransientInfra(Exception e)
+            {
+                // Socket / DNS
+                if (e is SocketException se)
+                    return se.SocketErrorCode is SocketError.TryAgain or SocketError.WouldBlock
+                                                or SocketError.TimedOut or SocketError.HostNotFound
+                                                or SocketError.NetworkDown or SocketError.NetworkUnreachable;
+
+                // Npgsql (pool/timeout/network)
+                if (e is NpgsqlException) return true;
+                if (e is TimeoutException) return true;
+                if (e.InnerException != null) return IsTransientInfra(e.InnerException);
+
+                return false;
+            }
 
             switch (ex)
             {
@@ -48,19 +65,30 @@ namespace EVB_Project.API.Middleware
                     title = "Unauthorized";
                     detail = _env.IsDevelopment() ? ex.Message : "Unauthorized";
                     break;
+
                 case ValidationAppException vex:
                     status = StatusCodes.Status422UnprocessableEntity;
                     title = "Validation Failed";
                     detail = vex.Message;
-                    extensions = new { traceId, errors = vex.Errors };
                     break;
+
                 case NotFoundException:
                     status = StatusCodes.Status404NotFound;
                     title = "Not Found";
                     break;
+
                 case ConflictException:
                     status = StatusCodes.Status409Conflict;
                     title = "Conflict";
+                    break;
+
+                default:
+                    if (IsTransientInfra(ex))
+                    {
+                        status = StatusCodes.Status503ServiceUnavailable;
+                        title = "Service Unavailable";
+                        // Gợi ý người dùng/FE retry sau vài giây
+                    }
                     break;
             }
 
@@ -73,9 +101,7 @@ namespace EVB_Project.API.Middleware
                 Instance = ctx.Request.Path
             };
 
-            var extJson = JsonSerializer.Serialize(extensions, JsonOpt);
-            var extDict = JsonSerializer.Deserialize<Dictionary<string, object>>(extJson, JsonOpt)!;
-            foreach (var kv in extDict) problem.Extensions[kv.Key] = kv.Value;
+            problem.Extensions["traceId"] = traceId;
 
             ctx.Response.ContentType = "application/problem+json";
             ctx.Response.StatusCode = status;

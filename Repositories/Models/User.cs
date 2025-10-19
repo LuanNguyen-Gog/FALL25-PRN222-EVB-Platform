@@ -18,14 +18,7 @@ public partial class User
 
     public string Role { get; set; }
     public UserStatus? Status { get; set; } // Enum
-
-    public string ExternalProvider { get; set; }
-
-    public string ExternalSubject { get; set; }
-
-    public bool? EmailVerified { get; set; }
-
-    public string AvatarUrl { get; set; }
+    public string? AvatarUrl { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

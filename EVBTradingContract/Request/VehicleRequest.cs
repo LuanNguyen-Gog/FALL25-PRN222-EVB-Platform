@@ -11,8 +11,8 @@ namespace EVBTradingContract.Request
     }
     public class VehicleFilterRequest
     {
-        public long? VehicleId { get; set; }
-        public long? OwnerId { get; set; }
+        public Guid? VehicleId { get; set; }
+        public Guid? OwnerId { get; set; }
         public string? Brand { get; set; }
         public string? Model { get; set; }
         public int? Year { get; set; }

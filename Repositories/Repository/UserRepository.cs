@@ -30,6 +30,8 @@ namespace Repositories.Repository
                 query = query.Where(u => u.Role == user.Role);
             if (user.Status.HasValue) // Filter by Status if it's not null or empty
                 query = query.Where(u => u.Status == user.Status);
+            if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
+                query = query.Where(u => u.AvatarUrl == user.AvatarUrl);
             return query.OrderBy(u => u.Id);
             //cần phải .ToList() ở service để thực thi câu query
         }
