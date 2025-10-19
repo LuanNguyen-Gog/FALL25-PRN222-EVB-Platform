@@ -1,12 +1,48 @@
 ﻿services:
   evb_project.api:
+    container_name: evb_project.api
     build:
       context: .
       dockerfile: EVB_Project.API/Dockerfile
-    container_name: evb_project.api
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: ${EVB_DB_CONN}
     ports:
       - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: >
+        Host=dpg-d3hr72j3fgac73a1ksb0-a.singapore-postgres.render.com;
+        Port=5432;
+        Database=evb_postgres;
+        Username=evb_postgres_user;
+        Password=yvXL3B7F2mIgibPlHeZrtSulbR82GSYW;
+        SSL Mode=Require;
+        Trust Server Certificate=true;
+        Pooling=true;
+        Maximum Pool Size=20;
+        Timeout=15;
+        Command Timeout=30;
+        Keepalive=30
+    depends_on:
+      - evb_database
+    networks:
+      - appnet
+
+  evb_database:
+    image: postgres:15
+    container_name: evb_database
+    restart: always
+    environment:
+      POSTGRES_USER: evb_postgres_user
+      POSTGRES_PASSWORD: yvXL3B7F2mIgibPlHeZrtSulbR82GSYW
+      POSTGRES_DB: evb_postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - evb_db_data:/var/lib/postgresql/data
+    networks:
+      - appnet
+
+networks:
+  appnet:
+
+volumes:
+  evb_db_data:

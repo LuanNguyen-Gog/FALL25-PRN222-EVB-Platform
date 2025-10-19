@@ -365,10 +365,6 @@ public partial class EVBatteryTradingContext : DbContext
 
             entity.HasIndex(e => e.Email, "users_email_key").IsUnique();
 
-            entity.HasIndex(e => new { e.ExternalProvider, e.ExternalSubject }, "ux_users_provider_sub")
-                .IsUnique()
-                .HasFilter("((external_provider IS NOT NULL) AND (external_subject IS NOT NULL))");
-
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("id");
@@ -377,9 +373,6 @@ public partial class EVBatteryTradingContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_at");
             entity.Property(e => e.Email).HasColumnName("email");
-            entity.Property(e => e.EmailVerified).HasColumnName("email_verified");
-            entity.Property(e => e.ExternalProvider).HasColumnName("external_provider");
-            entity.Property(e => e.ExternalSubject).HasColumnName("external_subject");
             entity.Property(e => e.Name)
                 .IsRequired()
                 .HasColumnName("name");

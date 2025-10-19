@@ -11,13 +11,13 @@ namespace EVBTradingContract.Request
     }
     public class ListingGetRequest
     {
-        public long? ListingId { get; set; }
+        public Guid? ListingId { get; set; }
 
-        public long? SellerId { get; set; }
+        public Guid? SellerId { get; set; }
 
-        public long? VehicleId { get; set; }
+        public Guid? VehicleId { get; set; }
 
-        public long? BatteryId { get; set; }
+        public Guid? BatteryId { get; set; }
 
         public string? Title { get; set; }
 

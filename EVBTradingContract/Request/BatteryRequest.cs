@@ -11,8 +11,8 @@ namespace EVBTradingContract.Request
     }
     public class BatteryFilterRequest
     {
-        public long? BatteryId { get; set; }
-        public long? OwnerId { get; set; }
+        public Guid? BatteryId { get; set; }
+        public Guid? OwnerId { get; set; }
         public string? Brand { get; set; }
         public string? Model { get; set; }
         public decimal? BatteryCapacityKwh { get; set; }
