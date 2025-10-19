@@ -43,7 +43,7 @@ namespace Services.Implement
             {
                 var entity = request.Adapt<User>();
                 var createdEntity = await _userRepository.CreateAsync(entity);
-                entity.Status = UserStatus.Active;
+                entity.Status = Repositories.Enum.Enum.UserStatus.Active;
                 return new ApiResponse<UserResponse>()
                 {
                     Success = true,

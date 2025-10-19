@@ -58,7 +58,7 @@ namespace Services.Implement
                     Email = user.Email,
                     Role = user.Role,
                     AvatarUrl = string.IsNullOrWhiteSpace(user.AvatarUrl) ? null : user.AvatarUrl,
-                    Status = user.Status,
+                    Status = user.Status.ToString(),
                     CreatedAt = user.CreatedAt
                 };
 

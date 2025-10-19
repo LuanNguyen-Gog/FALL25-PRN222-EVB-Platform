@@ -78,7 +78,6 @@ builder.Services.AddDbContext<EVBatteryTradingContext>(options =>
 
 // Register Mapster mappings
 MapsterConfig.RegisterMappings();
-MapsterEnumConfig.RegisterEnumStringConversions(typeof(Repositories.Enum.Enum).Assembly);
 
 // JWT configuration - use only appsettings.json values
 builder.Services.AddAuthentication(op => 
