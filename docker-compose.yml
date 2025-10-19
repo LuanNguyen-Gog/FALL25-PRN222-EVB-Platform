@@ -21,23 +21,6 @@
         Timeout=15;
         Command Timeout=30;
         Keepalive=30
-    depends_on:
-      - evb_database
-    networks:
-      - appnet
-
-  evb_database:
-    image: postgres:15
-    container_name: evb_database
-    restart: always
-    environment:
-      POSTGRES_USER: evb_postgres_user
-      POSTGRES_PASSWORD: yvXL3B7F2mIgibPlHeZrtSulbR82GSYW
-      POSTGRES_DB: evb_postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - evb_db_data:/var/lib/postgresql/data
     networks:
       - appnet
 
