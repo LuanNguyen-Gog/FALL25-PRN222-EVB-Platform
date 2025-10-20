@@ -13,5 +13,9 @@ namespace Services.Interface
     public interface IBatteryService
     {
         Task<PageResponse<BatteryResponse>> GetAllBatteries(BatteryFilterRequest request, int page, int pageSize);
+        Task<BatteryResponse> GetBatteryByIdAsync(Guid batteryId);
+        Task<BatteryResponse> CreateBatteryAsync(BatteryRequest request);
+        Task<bool> UpdateBatteryAsync(Guid batteryId, BatteryRequest request);
+        Task<bool> DeleteBatteryAsync(Guid batteryId);
     }
 }

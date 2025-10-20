@@ -12,5 +12,9 @@ namespace Services.Interface
     public interface IVehicleService
     {
         Task<PageResponse<VehicleResponse>> GetAllVehicle(VehicleFilterRequest request, int page, int pageSize);
+        Task<VehicleResponse> GetVehicleByIdAsync(Guid vehicleId);
+        Task<VehicleResponse> CreateVehicleAsync(VehicleRequest request);
+        Task<bool> UpdateVehicleAsync(Guid vehicleId, VehicleRequest request);
+        Task<bool> DeleteVehicleAsync(Guid vehicleId);
     }
 }

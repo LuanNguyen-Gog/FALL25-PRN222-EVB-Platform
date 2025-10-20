@@ -12,5 +12,9 @@ namespace Services.Interface
     public interface IListingService
     {
         Task<List<ListingResponse>> GetAllListingsAsync(ListingGetRequest request);
+        Task<ListingResponse> GetListingByIdAsync(long listingId);
+        Task<ListingResponse> CreateListingAsync(ListingGetRequest request);
+        Task<bool> UpdateListingAsync(long listingId, ListingGetRequest request);
+        Task<bool> DeleteListingAsync(long listingId);
     }
 }
