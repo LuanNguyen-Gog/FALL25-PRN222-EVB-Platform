@@ -202,7 +202,6 @@ namespace Services.Implement
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-                newUser.Status.ToString();
                 await _authRepo.CreateAsync(newUser, c);
 
                 var (access, expUtc) = _rtService.GenerateAccessToken(newUser, DateTime.UtcNow);
