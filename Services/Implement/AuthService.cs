@@ -4,6 +4,7 @@ using EVBTradingContract.Response;
 using Mapster;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Repositories.Models;
 using Repositories.Repository;
 using Services.Interface;
 using System;
@@ -169,6 +170,70 @@ namespace Services.Implement
                     Success = false,
                     Message = ex.Message,
                     Data = false
+                };
+            }
+        }
+
+        public async Task<ApiResponse<AuthResponse>> Register(RegisterRequest request, CancellationToken c = default)
+        {
+            try
+            {
+                var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+                var existingUser = await _authRepo.ExistEmail(normalizedEmail);
+
+                if (existingUser)
+                {
+                    return new ApiResponse<AuthResponse>()
+                    {
+                        Success = false,
+                        Message = "Email is already registered.",
+                        Data = null
+                    };
+                }
+
+                var newUser = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Name = request.Name.Trim(),
+                    Email = normalizedEmail,
+                    PasswordHash = request.Password.Trim(),
+                    Role = "member",
+                    Status = Repositories.Enum.Enum.UserStatus.Active,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                newUser.Status.ToString();
+                await _authRepo.CreateAsync(newUser, c);
+
+                var (access, expUtc) = _rtService.GenerateAccessToken(newUser, DateTime.UtcNow);
+                var (plainRefresh, _) = await _rtService.IssueAsync(newUser, c);
+
+                var tokenDto = new TokenResponse
+                {
+                    AccessToken = access,
+                    RefreshToken = plainRefresh,
+                    AccessTokenExpires = expUtc
+                };
+
+                var authResponse = new AuthResponse
+                {
+                    token = tokenDto,
+                    User = newUser.Adapt<UserResponse>()
+                };
+                return new ApiResponse<AuthResponse>()
+                {
+                    Success = true,
+                    Message = "Login successfully",
+                    Data = authResponse
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<AuthResponse>
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Data = null
                 };
             }
         }

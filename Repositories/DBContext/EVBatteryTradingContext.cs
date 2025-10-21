@@ -37,7 +37,60 @@ public partial class EVBatteryTradingContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder
+        // 1️⃣ Khai báo các enum PostgreSQL có sẵn trong DB
+        modelBuilder.HasPostgresEnum<UserStatus>("user_status_enum");
+        modelBuilder.HasPostgresEnum<OrderStatus>("order_status_enum");
+        modelBuilder.HasPostgresEnum<PaymentStatus>("payment_status_enum");
+        modelBuilder.HasPostgresEnum<ComplaintStatus>("complaint_status_enum");
+        modelBuilder.HasPostgresEnum<AssetStatus>("asset_status_enum");
+        modelBuilder.HasPostgresEnum<ListingStatus>("listing_status_enum");
+
+        // 2️⃣ Ánh xạ các cột enum tương ứng
+        modelBuilder.Entity<User>()
+            .Property(u => u.Status)
+            .HasColumnType("user_status_enum")
+            .HasColumnName("status")
+            .HasDefaultValue(UserStatus.Active);
+
+        modelBuilder.Entity<Order>()
+            .Property(o => o.Status)
+            .HasColumnType("order_status_enum")
+            .HasColumnName("status")
+            .HasDefaultValue(OrderStatus.Pending);
+
+        modelBuilder.Entity<Payment>()
+            .Property(p => p.Status)
+            .HasColumnType("payment_status_enum")
+            .HasColumnName("status")
+            .HasDefaultValue(PaymentStatus.Pending);
+
+        modelBuilder.Entity<Complaint>()
+            .Property(c => c.Status)
+            .HasColumnType("complaint_status_enum")
+            .HasColumnName("status")
+            .HasDefaultValue(ComplaintStatus.Open);
+
+        modelBuilder.Entity<Vehicle>()
+            .Property(v => v.Status)
+            .HasColumnType("asset_status_enum")
+            .HasColumnName("status")
+            .HasDefaultValue(AssetStatus.Available);
+
+        modelBuilder.Entity<Battery>()
+            .Property(b => b.Status)
+            .HasColumnType("asset_status_enum")
+            .HasColumnName("status")
+            .HasDefaultValue(AssetStatus.Available);
+
+        modelBuilder.Entity<Listing>()
+            .Property(l => l.Status)
+            .HasColumnType("listing_status_enum")
+            .HasColumnName("status")
+            .HasDefaultValue(ListingStatus.Draft);
+
+        base.OnModelCreating(modelBuilder);
+    
+    modelBuilder
             .HasPostgresEnum("asset_status_enum", new[] { "available", "reserved", "sold", "archived" })
             .HasPostgresEnum("complaint_status_enum", new[] { "open", "in_progress", "resolved", "rejected" })
             .HasPostgresEnum("listing_status_enum", new[] { "draft", "pending", "active", "rejected", "sold", "archived" })
@@ -423,75 +476,6 @@ public partial class EVBatteryTradingContext : DbContext
         });
 
         OnModelCreatingPartial(modelBuilder);
-    }
-
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder)
-    {
-        // ----- ENUM → TEXT mapping -----
-        modelBuilder.Entity<Order>()
-            .Property(o => o.Status)
-            .HasColumnName("status")
-            .HasConversion(
-                v => v.ToString().ToLower(), // write to DB
-                v => System.Enum.Parse<OrderStatus>(
-                    char.ToUpper(v[0]) + v.Substring(1)) // read from DB
-            ).HasDefaultValue(OrderStatus.Pending);
-
-        modelBuilder.Entity<Payment>()
-            .Property(p => p.Status)
-            .HasColumnName("status")
-            .HasConversion(
-                v => v.ToString().ToLower(),
-                v => System.Enum.Parse<PaymentStatus>(
-                    char.ToUpper(v[0]) + v.Substring(1))
-            ).HasDefaultValue(PaymentStatus.Pending);
-
-        modelBuilder.Entity<Complaint>()
-            .Property(c => c.Status)
-            .HasColumnName("status")
-            .HasConversion(
-                v => v == ComplaintStatus.InProgress ? "in_progress" : v.ToString().ToLower(),
-                v => v == "in_progress"
-                    ? ComplaintStatus.InProgress
-                    : System.Enum.Parse<ComplaintStatus>(
-                        char.ToUpper(v[0]) + v.Substring(1))
-            ).HasDefaultValue(ComplaintStatus.Open);
-
-        modelBuilder.Entity<User>()
-            .Property(u => u.Status)
-            .HasColumnName("status")
-            .HasConversion(
-                v => v.ToString().ToLower(),
-                v => System.Enum.Parse<UserStatus>(
-                    char.ToUpper(v[0]) + v.Substring(1))
-            ).HasDefaultValue(UserStatus.Active);
-
-        modelBuilder.Entity<Vehicle>()
-            .Property(v => v.Status)
-            .HasColumnName("status")
-            .HasConversion(
-                v => v.ToString().ToLower(),
-                v => System.Enum.Parse<AssetStatus>(
-                    char.ToUpper(v[0]) + v.Substring(1))
-            ).HasDefaultValue(AssetStatus.Available);
-
-        modelBuilder.Entity<Battery>()
-            .Property(b => b.Status)
-            .HasColumnName("status")
-            .HasConversion(
-                v => v.ToString().ToLower(),
-                v => System.Enum.Parse<AssetStatus>(
-                    char.ToUpper(v[0]) + v.Substring(1))
-            ).HasDefaultValue(AssetStatus.Available);
-
-        modelBuilder.Entity<Listing>()
-            .Property(l => l.Status)
-            .HasColumnName("status")
-            .HasConversion(
-                v => v.ToString().ToLower(),
-                v => System.Enum.Parse<ListingStatus>(
-                    char.ToUpper(v[0]) + v.Substring(1))
-            ).HasDefaultValue(ListingStatus.Draft);
     }
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
