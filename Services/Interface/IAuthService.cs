@@ -15,5 +15,7 @@ namespace Services.Interface
         Task<ApiResponse<TokenResponse>> Refresh(RefreshTokenRequest request, CancellationToken c = default);
         Task<ApiResponse<bool>> Logout(RefreshTokenRequest request, CancellationToken c = default);
         Task<ApiResponse<bool>> RevokeAll(Guid userId, CancellationToken c = default);
+
+        Task<ApiResponse<AuthResponse>> Register(RegisterRequest request, CancellationToken c = default);
     }
 }

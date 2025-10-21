@@ -7,12 +7,15 @@ using System.Threading.Tasks;
 
 namespace EVBTradingContract.Request
 {
-    public class AuthRequest
+    public class RegisterRequest
     {
-        [Required]
-        [EmailAddress]
+        [Required, StringLength(100)]
+        public string Name { get; set; } = default!;
+
+        [Required, EmailAddress, StringLength(200)]
         public string Email { get; set; } = default!;
-        [Required]
+
+        [Required, MinLength(4), StringLength(100)]
         public string Password { get; set; } = default!;
     }
 }

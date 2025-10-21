@@ -81,5 +81,28 @@ namespace EVB_Project.API.Controllers
 
             return Ok(response);
         }
+
+        [AllowAnonymous]
+        [HttpPost("register")]
+        public async Task<ActionResult<ApiResponse<AuthResponse>>> Register([FromBody] EVBTradingContract.Request.RegisterRequest request, CancellationToken c)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new ApiResponse<AuthResponse>
+                {
+                    Success = false,
+                    Message = "Invalid payload",
+                    Data = null
+                });
+
+            var result = await _auth.Register(request, c);
+            if (!result.Success)
+            {
+                // nếu service trả về lỗi "Email already exists" → dùng 409
+                return StatusCode(StatusCodes.Status409Conflict, result);
+            }
+
+            // Có thể trả 201 Created nếu bạn có endpoint GetUserById; tạm thời trả 200
+            return Ok(result);
+        }
     }
 }

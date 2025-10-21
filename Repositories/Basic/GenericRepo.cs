@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Repositories;
 using Repositories.DBContext;
+using Repositories.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -146,5 +147,13 @@ namespace Repositories.Basic
             return await query.FirstOrDefaultAsync(predicate);
         }
         #endregion Separating asign entity and save operators
+
+        public async Task<T> CreateAsync(T entity, CancellationToken c)
+        {
+            await _context.Set<T>().AddAsync(entity, c); // có thể bị hủy ở đây
+            await _context.SaveChangesAsync(c);        // hoặc ở đây
+            return entity;
+        }
+
     }
 }

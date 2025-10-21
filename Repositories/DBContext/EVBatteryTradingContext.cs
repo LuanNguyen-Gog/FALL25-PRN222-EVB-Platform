@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repositories.Models;
 using System;
 using System.Collections.Generic;
@@ -37,14 +38,7 @@ public partial class EVBatteryTradingContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder
-            .HasPostgresEnum("asset_status_enum", new[] { "available", "reserved", "sold", "archived" })
-            .HasPostgresEnum("complaint_status_enum", new[] { "open", "in_progress", "resolved", "rejected" })
-            .HasPostgresEnum("listing_status_enum", new[] { "draft", "pending", "active", "rejected", "sold", "archived" })
-            .HasPostgresEnum("order_status_enum", new[] { "pending", "processing", "completed", "cancelled" })
-            .HasPostgresEnum("payment_status_enum", new[] { "pending", "success", "failed", "refunded" })
-            .HasPostgresEnum("user_status_enum", new[] { "active", "inactive" })
-            .HasPostgresExtension("pgcrypto");
+        modelBuilder.HasPostgresExtension("pgcrypto");
 
         modelBuilder.Entity<Battery>(entity =>
         {
@@ -79,6 +73,10 @@ public partial class EVBatteryTradingContext : DbContext
                 .HasPrecision(7, 2)
                 .HasColumnName("nominal_voltage_v");
             entity.Property(e => e.OwnerId).HasColumnName("owner_id");
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasDefaultValueSql("'available'::text")
+                .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
@@ -105,6 +103,10 @@ public partial class EVBatteryTradingContext : DbContext
                 .IsRequired()
                 .HasColumnName("description");
             entity.Property(e => e.OrderId).HasColumnName("order_id");
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasDefaultValueSql("'open'::text")
+                .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
@@ -157,11 +159,11 @@ public partial class EVBatteryTradingContext : DbContext
 
             entity.HasIndex(e => e.BatteryId, "uq_listings_battery_active")
                 .IsUnique()
-                .HasFilter("((battery_id IS NOT NULL) AND (status = ANY (ARRAY['pending'::listing_status_enum, 'active'::listing_status_enum])))");
+                .HasFilter("((battery_id IS NOT NULL) AND (status = ANY (ARRAY['pending'::text, 'active'::text])))");
 
             entity.HasIndex(e => e.VehicleId, "uq_listings_vehicle_active")
                 .IsUnique()
-                .HasFilter("((vehicle_id IS NOT NULL) AND (status = ANY (ARRAY['pending'::listing_status_enum, 'active'::listing_status_enum])))");
+                .HasFilter("((vehicle_id IS NOT NULL) AND (status = ANY (ARRAY['pending'::text, 'active'::text])))");
 
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("gen_random_uuid()")
@@ -180,6 +182,10 @@ public partial class EVBatteryTradingContext : DbContext
                 .HasPrecision(14)
                 .HasColumnName("price_vnd");
             entity.Property(e => e.SellerId).HasColumnName("seller_id");
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasDefaultValueSql("'draft'::text")
+                .HasColumnName("status");
             entity.Property(e => e.Title)
                 .IsRequired()
                 .HasColumnName("title");
@@ -229,6 +235,10 @@ public partial class EVBatteryTradingContext : DbContext
             entity.Property(e => e.OrderDate)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("order_date");
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasDefaultValueSql("'pending'::text")
+                .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
@@ -267,6 +277,10 @@ public partial class EVBatteryTradingContext : DbContext
             entity.Property(e => e.OrderId).HasColumnName("order_id");
             entity.Property(e => e.PaidAt).HasColumnName("paid_at");
             entity.Property(e => e.ProviderTxnId).HasColumnName("provider_txn_id");
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasDefaultValueSql("'pending'::text")
+                .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
@@ -382,6 +396,10 @@ public partial class EVBatteryTradingContext : DbContext
                 .IsRequired()
                 .HasDefaultValueSql("'member'::text")
                 .HasColumnName("role");
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasDefaultValueSql("'active'::text")
+                .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
@@ -411,6 +429,10 @@ public partial class EVBatteryTradingContext : DbContext
                 .HasColumnName("model");
             entity.Property(e => e.OdometerKm).HasColumnName("odometer_km");
             entity.Property(e => e.OwnerId).HasColumnName("owner_id");
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasDefaultValueSql("'available'::text")
+                .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
@@ -424,74 +446,76 @@ public partial class EVBatteryTradingContext : DbContext
 
         OnModelCreatingPartial(modelBuilder);
     }
-
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder)
     {
-        // ----- ENUM → TEXT mapping -----
-        modelBuilder.Entity<Order>()
-            .Property(o => o.Status)
-            .HasColumnName("status")
-            .HasConversion(
-                v => v.ToString().ToLower(), // write to DB
-                v => System.Enum.Parse<OrderStatus>(
-                    char.ToUpper(v[0]) + v.Substring(1)) // read from DB
-            ).HasDefaultValue(OrderStatus.Pending);
+        // 1) Tạo converter cho từng enum (enum -> lowercase string)
+        var userStatusConv = new ValueConverter<UserStatus, string>(
+            v => v.ToString().ToLowerInvariant(),
+            v => System.Enum.Parse<UserStatus>(v, true)
+        );
+        var assetStatusConv = new ValueConverter<AssetStatus, string>(
+            v => v.ToString().ToLowerInvariant(),
+            v => System.Enum.Parse<AssetStatus>(v, true)
+        );
+        var listingStatusConv = new ValueConverter<ListingStatus, string>(
+            v => v.ToString().ToLowerInvariant(),
+            v => System.Enum.Parse<ListingStatus>(v, true)
+        );
+        var orderStatusConv = new ValueConverter<OrderStatus, string>(
+            v => v.ToString().ToLowerInvariant(),
+            v => System.Enum.Parse<OrderStatus>(v, true)
+        );
+        var paymentStatusConv = new ValueConverter<PaymentStatus, string>(
+            v => v.ToString().ToLowerInvariant(),
+            v => System.Enum.Parse<PaymentStatus>(v, true)
+        );
+        var complaintStatusConv = new ValueConverter<ComplaintStatus, string>(
+            v => v.ToString().ToLowerInvariant(),
+            v => System.Enum.Parse<ComplaintStatus>(v, true)
+        );
 
-        modelBuilder.Entity<Payment>()
-            .Property(p => p.Status)
-            .HasColumnName("status")
-            .HasConversion(
-                v => v.ToString().ToLower(),
-                v => System.Enum.Parse<PaymentStatus>(
-                    char.ToUpper(v[0]) + v.Substring(1))
-            ).HasDefaultValue(PaymentStatus.Pending);
-
-        modelBuilder.Entity<Complaint>()
-            .Property(c => c.Status)
-            .HasColumnName("status")
-            .HasConversion(
-                v => v == ComplaintStatus.InProgress ? "in_progress" : v.ToString().ToLower(),
-                v => v == "in_progress"
-                    ? ComplaintStatus.InProgress
-                    : System.Enum.Parse<ComplaintStatus>(
-                        char.ToUpper(v[0]) + v.Substring(1))
-            ).HasDefaultValue(ComplaintStatus.Open);
-
+        // 2) Áp converter + text cho từng entity
         modelBuilder.Entity<User>()
             .Property(u => u.Status)
             .HasColumnName("status")
-            .HasConversion(
-                v => v.ToString().ToLower(),
-                v => System.Enum.Parse<UserStatus>(
-                    char.ToUpper(v[0]) + v.Substring(1))
-            ).HasDefaultValue(UserStatus.Active);
+            .HasColumnType("text")
+            .HasConversion(userStatusConv);
 
         modelBuilder.Entity<Vehicle>()
             .Property(v => v.Status)
             .HasColumnName("status")
-            .HasConversion(
-                v => v.ToString().ToLower(),
-                v => System.Enum.Parse<AssetStatus>(
-                    char.ToUpper(v[0]) + v.Substring(1))
-            ).HasDefaultValue(AssetStatus.Available);
+            .HasColumnType("text")
+            .HasConversion(assetStatusConv);
 
         modelBuilder.Entity<Battery>()
             .Property(b => b.Status)
             .HasColumnName("status")
-            .HasConversion(
-                v => v.ToString().ToLower(),
-                v => System.Enum.Parse<AssetStatus>(
-                    char.ToUpper(v[0]) + v.Substring(1))
-            ).HasDefaultValue(AssetStatus.Available);
+            .HasColumnType("text")
+            .HasConversion(assetStatusConv);
 
         modelBuilder.Entity<Listing>()
             .Property(l => l.Status)
             .HasColumnName("status")
-            .HasConversion(
-                v => v.ToString().ToLower(),
-                v => System.Enum.Parse<ListingStatus>(
-                    char.ToUpper(v[0]) + v.Substring(1))
-            ).HasDefaultValue(ListingStatus.Draft);
+            .HasColumnType("text")
+            .HasConversion(listingStatusConv);
+
+        modelBuilder.Entity<Order>()
+            .Property(o => o.Status)
+            .HasColumnName("status")
+            .HasColumnType("text")
+            .HasConversion(orderStatusConv);
+
+        modelBuilder.Entity<Payment>()
+            .Property(p => p.Status)
+            .HasColumnName("status")
+            .HasColumnType("text")
+            .HasConversion(paymentStatusConv);
+
+        modelBuilder.Entity<Complaint>()
+            .Property(c => c.Status)
+            .HasColumnName("status")
+            .HasColumnType("text")
+            .HasConversion(complaintStatusConv);
     }
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
