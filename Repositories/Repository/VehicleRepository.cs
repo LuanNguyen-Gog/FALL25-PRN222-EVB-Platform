@@ -31,7 +31,7 @@ namespace Repositories.Repository
             if (vehicle.Status.HasValue)
                 query = query.Where(v => v.Status == vehicle.Status);
             return query.OrderBy(v => v.Id);
-            //cần phải .ToList() ở service để thực thi câu query
+           
         }
     }
 }

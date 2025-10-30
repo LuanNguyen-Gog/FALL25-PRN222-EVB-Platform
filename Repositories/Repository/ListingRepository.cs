@@ -37,7 +37,7 @@ namespace Repositories.Repository
             if (listing.ApprovedBy.HasValue)
                 query = query.Where(b => b.ApprovedBy == listing.ApprovedBy);
             return query.OrderBy(b => b.Id);
-            //cần phải .ToList() ở service để thực thi câu query
+            
         }
     }
 }
