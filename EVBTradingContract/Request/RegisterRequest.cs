@@ -17,5 +17,8 @@ namespace EVBTradingContract.Request
 
         [Required, MinLength(4), StringLength(100)]
         public string Password { get; set; } = default!;
+        [Phone(ErrorMessage = "Invalid phone number")]
+        [StringLength(20)]
+        public string? Phone { get; set; } = default!;
     }
 }

@@ -1,6 +1,10 @@
 ﻿using EVB_Project.API.Middleware;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Repositories.DBContext;
@@ -11,6 +15,7 @@ using Services.Interface;
 using Services.Mapping;
 using System.Text;
 using System.Text.Json.Serialization;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,12 +85,16 @@ builder.Services.AddDbContext<EVBatteryTradingContext>(options =>
 MapsterConfig.RegisterMappings();
 
 // JWT configuration - use only appsettings.json values
-builder.Services.AddAuthentication(op => 
+builder.Services.AddAuthentication(op =>
 {
     op.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     op.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     op.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(o =>
+    //op.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    //op.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    //op.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(o =>
     {
         o.TokenValidationParameters = new TokenValidationParameters
         {
@@ -98,7 +107,14 @@ builder.Services.AddAuthentication(op =>
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
             ClockSkew = TimeSpan.FromSeconds(30)
         };
-    });
+    })
+    //.AddGoogle(options =>
+    //{
+    //    options.ClientId = builder.Configuration["Google:ClientId"];
+    //    options.ClientSecret = builder.Configuration["Google:ClientSecret"];
+    //    options.CallbackPath = "/api/auth/google/callback";
+    //})
+    ;
 builder.Services.AddAuthorization();
 
 //CORS

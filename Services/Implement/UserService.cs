@@ -37,7 +37,7 @@ namespace Services.Implement
                 PageSize = pageSize
             };
         }
-        public async Task<ApiResponse<UserResponse>> CreateUser(UserCreateRequest request)
+        public async Task<ApiResponse<UserResponse>> CreateUser(UserRequest request)
         {
             try
             {

@@ -30,7 +30,7 @@ namespace EVB_Project.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<UserResponse>>> CreateUser([FromBody] UserCreateRequest request)
+        public async Task<ActionResult<ApiResponse<UserResponse>>> CreateUser([FromBody] UserRequest request)
         {
             var result = await _userService.CreateUser(request);
             return Ok(result);

@@ -32,7 +32,7 @@ namespace Services.Implement
         {
             try
             {
-                var user = await _authRepo.GetUserByEmail(request.Email);
+                var user = await _authRepo.GetUserByEmail(request.Email.ToLowerInvariant().Trim());
                 if (user is null)
                     return new ApiResponse<AuthResponse>()
                     {
@@ -199,6 +199,7 @@ namespace Services.Implement
                     PasswordHash = request.Password.Trim(),
                     Role = "member",
                     Status = Repositories.Enum.Enum.UserStatus.Active,
+                    Phone = request.Phone?.Trim(),
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
