@@ -1,4 +1,5 @@
 ﻿using EVB_Project.API.Middleware;
+using Mapster;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -13,6 +14,7 @@ using Services;
 using Services.Implement;
 using Services.Interface;
 using Services.Mapping;
+using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -69,6 +71,10 @@ builder.Services.AddScoped<TokenRepository>();
 builder.Services.AddScoped<RefreshTokenService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
+builder.Services.AddScoped<PaymentRepository>();
+builder.Services.AddScoped<OrderRepository>();
+builder.Services.AddScoped<IVNPayService, VNPayService>();
+
 // Configure JSON options to use string enums
 builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -83,6 +89,7 @@ builder.Services.AddDbContext<EVBatteryTradingContext>(options =>
 
 // Register Mapster mappings
 MapsterConfig.RegisterMappings();
+TypeAdapterConfig.GlobalSettings.Scan(Assembly.GetExecutingAssembly());
 
 // JWT configuration - use only appsettings.json values
 builder.Services.AddAuthentication(op =>
