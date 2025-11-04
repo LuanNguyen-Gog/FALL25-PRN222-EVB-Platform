@@ -66,13 +66,16 @@ builder.Services.AddScoped<ListingRepository>();
 builder.Services.AddScoped<IListingService, ListingService>();
 builder.Services.AddScoped<AuthRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ContractRepository>();
+builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 builder.Services.AddScoped<TokenRepository>();
 builder.Services.AddScoped<RefreshTokenService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
 builder.Services.AddScoped<PaymentRepository>();
-builder.Services.AddScoped<OrderRepository>();
 builder.Services.AddScoped<IVNPayService, VNPayService>();
 
 // Configure JSON options to use string enums

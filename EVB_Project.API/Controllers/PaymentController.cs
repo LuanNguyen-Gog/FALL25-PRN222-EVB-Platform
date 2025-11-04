@@ -8,7 +8,7 @@ using Services.Interface;
 namespace EVB_Project.API.Controllers
 {
     [ApiController]
-    [Route("api")]
+    [Route("api/payment")]
     [Authorize(Roles = "member")]
     public class PaymentsController : ControllerBase
     {
