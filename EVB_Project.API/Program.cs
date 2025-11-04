@@ -3,12 +3,14 @@ using Mapster;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using EVBTradingContract.Response;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Repositories.DBContext;
+using Repositories.Models;
 using Repositories.Repository;
 using Services;
 using Services.Implement;
@@ -20,6 +22,8 @@ using System.Text.Json.Serialization;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+var config = TypeAdapterConfig.GlobalSettings;
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -94,6 +98,12 @@ builder.Services.AddDbContext<EVBatteryTradingContext>(options =>
 MapsterConfig.RegisterMappings();
 TypeAdapterConfig.GlobalSettings.Scan(Assembly.GetExecutingAssembly());
 
+// Quét các assembly của bạn
+MapsterIdHelper.RegisterIdMappings(
+    config,
+    typeof(User).Assembly,        // Assembly chứa Entities (Repositories.Models)
+    typeof(UserResponse).Assembly // Assembly chứa DTO (Request + Response)
+);
 // JWT configuration - use only appsettings.json values
 builder.Services.AddAuthentication(op =>
 {
