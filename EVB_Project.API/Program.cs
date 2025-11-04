@@ -1,8 +1,12 @@
 ﻿using EVB_Project.API.Middleware;
-using EVBTradingContract.Response;
 using Mapster;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using EVBTradingContract.Response;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Repositories.DBContext;
@@ -12,8 +16,10 @@ using Services;
 using Services.Implement;
 using Services.Interface;
 using Services.Mapping;
+using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,10 +70,17 @@ builder.Services.AddScoped<ListingRepository>();
 builder.Services.AddScoped<IListingService, ListingService>();
 builder.Services.AddScoped<AuthRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ContractRepository>();
+builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 builder.Services.AddScoped<TokenRepository>();
 builder.Services.AddScoped<RefreshTokenService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+
+builder.Services.AddScoped<PaymentRepository>();
+builder.Services.AddScoped<IVNPayService, VNPayService>();
 
 // Configure JSON options to use string enums
 builder.Services.AddControllers()
@@ -83,6 +96,8 @@ builder.Services.AddDbContext<EVBatteryTradingContext>(options =>
 
 // Register Mapster mappings
 MapsterConfig.RegisterMappings();
+TypeAdapterConfig.GlobalSettings.Scan(Assembly.GetExecutingAssembly());
+
 // Quét các assembly của bạn
 MapsterIdHelper.RegisterIdMappings(
     config,
@@ -90,12 +105,16 @@ MapsterIdHelper.RegisterIdMappings(
     typeof(UserResponse).Assembly // Assembly chứa DTO (Request + Response)
 );
 // JWT configuration - use only appsettings.json values
-builder.Services.AddAuthentication(op => 
+builder.Services.AddAuthentication(op =>
 {
     op.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     op.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     op.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(o =>
+    //op.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    //op.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    //op.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(o =>
     {
         o.TokenValidationParameters = new TokenValidationParameters
         {
@@ -108,7 +127,14 @@ builder.Services.AddAuthentication(op =>
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
             ClockSkew = TimeSpan.FromSeconds(30)
         };
-    });
+    })
+    //.AddGoogle(options =>
+    //{
+    //    options.ClientId = builder.Configuration["Google:ClientId"];
+    //    options.ClientSecret = builder.Configuration["Google:ClientSecret"];
+    //    options.CallbackPath = "/api/auth/google/callback";
+    //})
+    ;
 builder.Services.AddAuthorization();
 
 //CORS

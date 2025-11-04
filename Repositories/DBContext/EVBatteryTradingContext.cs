@@ -273,6 +273,7 @@ public partial class EVBatteryTradingContext : DbContext
                 .HasColumnName("created_at");
             entity.Property(e => e.Method)
                 .IsRequired()
+                .HasDefaultValueSql("'vnpay'::text")
                 .HasColumnName("method");
             entity.Property(e => e.OrderId).HasColumnName("order_id");
             entity.Property(e => e.PaidAt).HasColumnName("paid_at");
@@ -473,6 +474,26 @@ public partial class EVBatteryTradingContext : DbContext
             v => v.ToString().ToLowerInvariant(),
             v => System.Enum.Parse<ComplaintStatus>(v, true)
         );
+
+        var paymentMethodConv = new ValueConverter<PaymentMethod, string>(
+        v => v.ToString().ToLowerInvariant(),               // C# enum -> "vnpay"
+        v => System.Enum.Parse<PaymentMethod>(v, true)             // "vnpay" -> PaymentMethod.VnPay
+        );
+
+        // Áp converter & cấu hình cột "method"
+        modelBuilder.Entity<Payment>()
+            .Property(p => p.Method)
+            .HasColumnName("method")
+            .HasColumnType("text")
+            .HasConversion(paymentMethodConv)
+            // nếu muốn có mặc định khi INSERT mà chưa set Method:
+            .HasDefaultValueSql("'vnpay'::text"); // CHỌN 1 trong 2: DefaultValue hoặc DefaultValueSql
+
+        // Giữ amount_vnd là numeric(14,0)
+        modelBuilder.Entity<Payment>()
+            .Property(p => p.AmountVnd)
+            .HasColumnName("amount_vnd")
+            .HasPrecision(14);
 
         // 2) Áp converter + text cho từng entity
         modelBuilder.Entity<User>()

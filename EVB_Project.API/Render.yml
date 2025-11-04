@@ -15,7 +15,7 @@
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       # Attach DB and inject its connection string to the app
-      - key: ConnectionStrings__DefaultConnection
+      - key: DefaultConnection
         fromDatabase:
           name: evb_postgres
           property: connectionString

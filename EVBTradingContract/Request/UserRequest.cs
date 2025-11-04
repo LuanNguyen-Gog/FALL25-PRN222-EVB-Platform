@@ -41,26 +41,4 @@ namespace EVBTradingContract.Request
         public string? Role { get; set; }
         public string? Status { get; set; }
     }
-    public class UserCreateRequest
-    {
-        [Required(ErrorMessage = "Name is required")]
-        [StringLength(100, MinimumLength = 1, ErrorMessage = "Name must be 1–100 characters")]
-        public string Name { get; set; } = default!;
-
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Invalid email format")]
-        [StringLength(200)]
-        public string Email { get; set; } = default!;
-
-        [Required(ErrorMessage = "Password is required")]
-        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be 6–100 characters")]
-        public string PasswordHash { get; set; } = default!;  // plaintext, BE hash
-
-        [Phone(ErrorMessage = "Invalid phone number")]
-        [StringLength(20)]
-        public string? Phone { get; set; }
-
-        [StringLength(30)]
-        public string Role { get; set; } = "member";
-    }
 }

@@ -12,8 +12,9 @@ public partial class Payment
 
     public decimal AmountVnd { get; set; }
 
-    public string Method { get; set; }
+    //public string Method { get; set; } đổi sang enum
     public PaymentStatus? Status { get; set; } // Enum
+    public PaymentMethod? Method { get; set; } // phương thức thanh toán
 
     public DateTime? PaidAt { get; set; }
 

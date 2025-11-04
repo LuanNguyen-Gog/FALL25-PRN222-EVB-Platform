@@ -12,7 +12,7 @@ namespace Services.Interface
     public interface IUserService
     {
         Task<PageResponse<UserResponse>> GetAllUsersFiltered(UserFilterRequest request, int page, int pageSize);
-        Task<ApiResponse<UserResponse>> CreateUser(UserCreateRequest request);
+        Task<ApiResponse<UserResponse>> CreateUser(UserRequest request);
         Task<ApiResponse<UserResponse?>> GetUserById(Guid userId);
         Task<ApiResponse<bool>> DeleteUser(Guid userId);
         Task<ApiResponse<bool>> UpdateUser(Guid userId, UserRequest user);

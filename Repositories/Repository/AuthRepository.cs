@@ -17,7 +17,7 @@ namespace Repositories.Repository
 
         public async Task<User?> GetUserByEmail(string email, bool asNoTracking = true)
         {
-            return await FirstOrDefaultAsync(u => u.Email == email, asNoTracking);
+            return await FirstOrDefaultAsync(u => u.Email == email);
         }
         public async Task<bool> ExistEmail(string email)
         {

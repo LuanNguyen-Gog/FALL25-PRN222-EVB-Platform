@@ -28,5 +28,9 @@ namespace Repositories.Enum
         }
         public enum PaymentStatus { Pending = 0, Success = 1, Failed = 2, Refunded = 3 }
         public enum ComplaintStatus { Open = 0, InProgress = 1, Resolved = 2, Rejected = 3 }
+        public enum PaymentMethod
+        {
+            VnPay = 0
+        }
     }
 }
