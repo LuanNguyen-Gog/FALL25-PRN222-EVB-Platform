@@ -15,22 +15,23 @@ namespace Services.Mapping
     {
         public void Register(TypeAdapterConfig config)
         {
-            // Payment → VNPayCreateResponse
-            TypeAdapterConfig<Payment, VNPayCreateResponse>
-                .NewConfig()
-                .Map(dest => dest.PaymentId, src => src.Id)
-                .Map(dest => dest.OrderId, src => src.OrderId)
-                .Map(dest => dest.AmountVnd, src => src.AmountVnd)
-                .Ignore(dest => dest.PaymentUrl); // PaymentUrl tạo trong service (không có trong entity)
+            config.NewConfig<Payment, VNPayReturnResponse>()
+              .Map(dest => dest.Success, src => src.Status == PaymentStatus.Success)
+              .Map(dest => dest.Message, src => src.Status == PaymentStatus.Success ? "Payment success" : "Payment failed")
+              .Map(dest => dest.OrderId, src => src.OrderId.ToString())
+              .Map(dest => dest.Amount, src => src.AmountVnd.ToString("0"))
+              .Map(dest => dest.TransactionNo, src => src.ProviderTxnId)
+              .Map(dest => dest.ResponseCode, src => (string?)null)
+              .Map(dest => dest.TransactionStatus, src => src.Status.ToString());
 
-            // Payment → VNPayReturnResponse (trường hợp bạn cần map tự động)
-            TypeAdapterConfig<Payment, VNPayReturnResponse>
-                .NewConfig()
-                .Map(dest => dest.IsSuccess, src => src.Status == PaymentStatus.Success)
-                .Map(dest => dest.Message, src => src.Status == PaymentStatus.Success ? "Payment success" : "Payment failed")
-                .Map(dest => dest.ProviderTxnId, src => src.ProviderTxnId)
-                .Ignore(dest => dest.RspCode)
-                .Ignore(dest => dest.VnPayTxnNo);
+            config.NewConfig<PaymentResult, VNPayReturnResponse>()
+                  .Map(dest => dest.Success, src => src.IsSuccess)
+                  .Map(dest => dest.Message, src => src.PaymentResponse.Description)
+                  .Map(dest => dest.OrderId, src => src.Description)
+                  .Map(dest => dest.Amount, src => (string?)null)
+                  .Map(dest => dest.TransactionNo, src => (string?)null)
+                  .Map(dest => dest.ResponseCode, src => (string?)null)
+                  .Map(dest => dest.TransactionStatus, src => (string?)null);
         }
     }
 }

@@ -19,6 +19,7 @@ using Services.Mapping;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
+using VNPAY.NET;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -59,6 +60,8 @@ builder.Services.AddSwaggerGen(c =>
 // đăng ký middleware qua DI
 //Dùng middleware để bắt lỗi toàn cục tránh việc phải try catch ở từng action(controller)
 builder.Services.AddTransient<GlobalExceptionMiddleware>();
+// Add HttpContextAccessor
+builder.Services.AddHttpContextAccessor();
 //Add scoped services
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -79,6 +82,7 @@ builder.Services.AddScoped<TokenRepository>();
 builder.Services.AddScoped<RefreshTokenService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
+builder.Services.AddSingleton<IVnpay, Vnpay>();
 builder.Services.AddScoped<PaymentRepository>();
 builder.Services.AddScoped<IVNPayService, VNPayService>();
 

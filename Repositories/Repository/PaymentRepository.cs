@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Repositories.Basic;
 using Repositories.DBContext;
 using Repositories.Models;
@@ -39,5 +40,36 @@ namespace Repositories.Repository
             tracker.State = EntityState.Modified;
             await _context.SaveChangesAsync();
         }
+        public async Task UpsertPendingAsync(Guid orderId, decimal amountVnd)
+        {
+            var p = await _context.Set<Payment>().FirstOrDefaultAsync(x => x.OrderId == orderId);
+            if (p == null)
+            {
+                p = new Payment
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = orderId,
+                    AmountVnd = amountVnd,
+                    Method = PaymentMethod.VnPay,
+                    Status = PaymentStatus.Pending,
+                    ProviderTxnId = null,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                await _context.Set<Payment>().AddAsync(p);
+            }
+            else
+            {
+                p.AmountVnd = amountVnd;
+                p.Method = PaymentMethod.VnPay;
+                p.Status = PaymentStatus.Pending;
+                p.ProviderTxnId = null;
+                p.UpdatedAt = DateTime.UtcNow;
+                _context.Set<Payment>().Update(p);
+            }
+            await _context.SaveChangesAsync(); // ❗️Đừng quên
+        }
+
     }
 }
+

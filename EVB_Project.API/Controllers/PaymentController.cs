@@ -3,45 +3,36 @@ using EVBTradingContract.Request;
 using EVBTradingContract.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Repositories.Models;
 using Services.Interface;
 
 namespace EVB_Project.API.Controllers
 {
     [ApiController]
-    [Route("api/payment")]
-    [Authorize(Roles = "member")]
-    public class PaymentsController : ControllerBase
+    [Route("api/payments")] // số nhiều
+    //[Authorize(Roles = "member")]
+    public sealed class PaymentsController : ControllerBase
     {
-        private readonly IVNPayService _vnPayService;
-        public PaymentsController(IVNPayService vnPayService)
-        {
-            _vnPayService = vnPayService;
-        }
+        private readonly IVNPayService _vnPay;
+        public PaymentsController(IVNPayService vnPay) => _vnPay = vnPay;
 
-        // Tạo payment URL theo Order (orderId ở route)
+        // POST /api/orders/{orderId}/payments/vnpay
+        // -> trả ApiResponse<VNPayCreateResponse> (chứa paymentUrl)
         [HttpPost("orders/{orderId:guid}/payments/vnpay")]
-        public async Task<ActionResult<ApiResponse<VNPayCreateResponse>>> CreateForOrder(
-            [FromRoute] Guid orderId,
-            [FromBody] VNPayCreateRequest request,
-            CancellationToken ct)
+        public async Task<ActionResult<ApiResponse<VNPayCreateResponse>>> CreateVnPay(
+            [FromRoute] Guid orderId)
         {
-            request.ClientIp ??= HttpContext.Connection.RemoteIpAddress?.ToString();
-            var res = await _vnPayService.CreatePaymentUrlAsync(orderId, request, ct);
+            var res = await _vnPay.GetPaymentUrl(orderId);
             return Ok(res);
         }
 
-        [HttpGet("payments/vnpay/return")]
-        public async Task<ActionResult<ApiResponse<VNPayReturnResponse>>> Return(CancellationToken ct)
+        // GET /api/payments/vnpay/callback?...
+        // -> trả ApiResponse<VNPayReturnResponse> (kết quả từ VNPay)
+        [HttpGet("payments/vnpay/callback")]
+        public async Task<ActionResult<ApiResponse<VNPayReturnResponse>>> VnPayCallback()
         {
-            var res = await _vnPayService.HandleReturnAsync(Request.Query, ct);
+            var res = await _vnPay.ProcessIpnAction(Request.Query);
             return Ok(res);
-        }
-
-        [HttpGet("payments/vnpay/ipn")]
-        public async Task<IActionResult> Ipn(CancellationToken ct)
-        {
-            var text = await _vnPayService.HandleIpnAsync(Request.Query, ct);
-            return Content(text, "text/plain");
         }
     }
 }

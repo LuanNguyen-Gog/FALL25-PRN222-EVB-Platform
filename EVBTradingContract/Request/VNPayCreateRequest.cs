@@ -8,7 +8,7 @@ namespace EVBTradingContract.Request
 {
     public class VNPayCreateRequest
     {
-        public decimal? AmountOverride { get; set; }
-        public string? ClientIp { get; set; }
+        public string? BankCode { get; set; }   // "VNPAYQR", "VNBANK", "INTCARD", ...
+        public string? ClientIp { get; set; }   // sẽ fallback từ HttpContext nếu null
     }
 }

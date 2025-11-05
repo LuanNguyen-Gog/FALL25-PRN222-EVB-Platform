@@ -168,9 +168,6 @@ public partial class EVBatteryTradingContext : DbContext
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("id");
-            entity.Property(e => e.AiSuggestedPriceVnd)
-                .HasPrecision(14)
-                .HasColumnName("ai_suggested_price_vnd");
             entity.Property(e => e.ApprovedAt).HasColumnName("approved_at");
             entity.Property(e => e.ApprovedBy).HasColumnName("approved_by");
             entity.Property(e => e.BatteryId).HasColumnName("battery_id");

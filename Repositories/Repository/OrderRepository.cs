@@ -62,5 +62,20 @@ namespace Repositories.Repository
         // validate Listing tồn tại
         public async Task<bool> ListingExistsAsync(Guid listingId, CancellationToken ct = default)
             => await _context.Set<Listing>().AnyAsync(x => x.Id == listingId, ct);
+
+        public async Task<decimal?> GetListingPriceByOrderIdAsync(Guid orderId, CancellationToken ct = default)
+        {
+            var listingId = await _context.Orders
+                .Where(o => o.Id == orderId)
+                .Select(o => (Guid?)o.ListingId)
+                .FirstOrDefaultAsync(ct);
+
+            if (!listingId.HasValue) return null;
+
+            return await _context.Set<Listing>()
+                .Where(l => l.Id == listingId.Value)
+                .Select(l => (decimal?)l.PriceVnd)
+                .FirstOrDefaultAsync(ct);
+        }
     }
 }
