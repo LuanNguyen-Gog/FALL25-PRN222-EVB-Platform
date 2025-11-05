@@ -8,10 +8,12 @@ namespace EVBTradingContract.Response
 {
     public class VNPayReturnResponse
     {
-        public bool IsSuccess { get; set; }
-        public string? Message { get; set; }
-        public string? ProviderTxnId { get; set; }
-        public string? RspCode { get; set; }
-        public string? VnPayTxnNo { get; set; }
+        public bool Success { get; set; }
+        public string Message { get; set; } = "";
+        public string? OrderId { get; set; }
+        public string? Amount { get; set; }             // vnp_Amount (chuỗi gốc)
+        public string? TransactionNo { get; set; }      // vnp_TransactionNo
+        public string? ResponseCode { get; set; }       // vnp_ResponseCode
+        public string? TransactionStatus { get; set; }  // vnp_TransactionStatus
     }
 }

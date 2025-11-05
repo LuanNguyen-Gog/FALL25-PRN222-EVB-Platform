@@ -9,11 +9,11 @@
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: >
-        Host=dpg-d3hr72j3fgac73a1ksb0-a.singapore-postgres.render.com;
+        Host=dpg-d45ednumcj7s738us1a0-a.singapore-postgres.render.com;
         Port=5432;
-        Database=evb_postgres;
-        Username=evb_postgres_user;
-        Password=yvXL3B7F2mIgibPlHeZrtSulbR82GSYW;
+        Database=evb_postgres_t8pe;
+        Username=evb_postgres_t8pe_user;
+        Password=d7uOzJH0DXciRNUgKBLNcFcdCjuivflw;
         SSL Mode=Require;
         Trust Server Certificate=true;
         Pooling=true;

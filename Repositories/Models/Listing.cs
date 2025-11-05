@@ -20,9 +20,8 @@ public partial class Listing
 
     public decimal? PriceVnd { get; set; }
 
-    public decimal? AiSuggestedPriceVnd { get; set; }
-
     public Guid? ApprovedBy { get; set; }
+
     public ListingStatus? Status { get; set; } // Enum
 
     public DateTime? ApprovedAt { get; set; }

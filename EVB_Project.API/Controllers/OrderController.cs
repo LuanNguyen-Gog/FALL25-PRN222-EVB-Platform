@@ -10,7 +10,7 @@ namespace EVB_Project.API.Controllers
 {
     [ApiController]
     [Route("api/orders")]
-    [Authorize(Roles = "member")]
+    //[Authorize(Roles = "member")]
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _svc;

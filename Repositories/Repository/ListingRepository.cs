@@ -30,8 +30,6 @@ namespace Repositories.Repository
                 query = query.Where(b => b.Description == listing.Description);
             if (listing.PriceVnd.HasValue)
                 query = query.Where(b => b.PriceVnd == listing.PriceVnd);
-            if (listing.AiSuggestedPriceVnd.HasValue)
-                query = query.Where(b => b.AiSuggestedPriceVnd == listing.AiSuggestedPriceVnd);
             if (listing.Status.HasValue)
                 query = query.Where(b => b.Status == listing.Status);
             if (listing.ApprovedBy.HasValue)
