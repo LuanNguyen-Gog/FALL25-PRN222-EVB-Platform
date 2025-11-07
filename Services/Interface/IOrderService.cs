@@ -1,4 +1,5 @@
 ﻿using EVBTradingContract.Common;
+using EVBTradingContract.Request;
 using EVBTradingContract.Response;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace Services.Interface
 {
     public interface IOrderService
     {
-        Task<ApiResponse<OrderResponse>> CreateAsync(Guid buyerId, Guid listingId, CancellationToken ct = default);
+        Task<ApiResponse<OrderResponse>> CreateAsync(OrderCreateRequest request, CancellationToken ct = default);
         Task<ApiResponse<OrderResponse>> GetAsync(Guid id, CancellationToken ct = default);
         Task<ApiResponse<object>> SearchAsync(Guid? buyerId, string? status, int page, int pageSize, CancellationToken ct = default);
         Task<ApiResponse<OrderResponse>> UpdateStatusAsync(Guid id, OrderStatus newStatus, CancellationToken ct = default);

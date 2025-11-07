@@ -11,5 +11,7 @@
         public decimal NominalVoltageV { get; set; }
         public string? CompatibilityNote { get; set; }
         public string? Status { get; set; }
+
+        public decimal? PriceVnd { get; set; }
     }
 }

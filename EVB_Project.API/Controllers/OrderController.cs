@@ -26,8 +26,7 @@ namespace EVB_Project.API.Controllers
         [HttpPost("create-order")]
         public async Task<ActionResult<ApiResponse<OrderResponse>>> Create([FromBody] OrderCreateRequest req, CancellationToken ct)
         {
-            var res = await _svc.CreateAsync(req.BuyerId, req.ListingId, ct);
-            if (!res.Success) return BadRequest(res);
+            var res = await _svc.CreateAsync(req, ct);
             return Ok(res);
         }
 

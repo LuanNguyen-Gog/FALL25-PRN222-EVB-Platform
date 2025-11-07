@@ -74,6 +74,10 @@ public partial class EVBatteryTradingContext : DbContext
                 .HasPrecision(7, 2)
                 .HasColumnName("nominal_voltage_v");
             entity.Property(e => e.OwnerId).HasColumnName("owner_id");
+            entity.Property(e => e.PriceVnd)
+                .HasPrecision(18)
+                .HasColumnName("price_vnd")
+                .IsRequired();
             entity.Property(e => e.Status)
                 .IsRequired()
                 .HasDefaultValueSql("'available'::text")
@@ -160,6 +164,7 @@ public partial class EVBatteryTradingContext : DbContext
             entity.HasKey(e => e.Id).HasName("listings_pkey");
             entity.ToTable("listings");
 
+            // ---- Indexes (giữ như PA2 + filter ACTIVE/PENDING) ----
             entity.HasIndex(e => e.PriceVnd, "idx_listings_price");
 
             entity.HasIndex(e => e.BatteryId, "uq_listings_battery_active")
@@ -170,50 +175,74 @@ public partial class EVBatteryTradingContext : DbContext
                 .IsUnique()
                 .HasFilter("((vehicle_id IS NOT NULL) AND (status = ANY (ARRAY['pending'::text, 'active'::text])))");
 
-            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
+            // ---- Columns ----
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()")
+                .HasColumnName("id");
+
             entity.Property(e => e.ApprovedAt).HasColumnName("approved_at");
             entity.Property(e => e.ApprovedBy).HasColumnName("approved_by");
-            entity.Property(e => e.BatteryId).HasColumnName("battery_id");   // Guid?  => optional
-            entity.Property(e => e.VehicleId).HasColumnName("vehicle_id");   // Guid?  => optional
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()").HasColumnName("created_at");
-            entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.PriceVnd).HasPrecision(14).HasColumnName("price_vnd");
-            entity.Property(e => e.SellerId).HasColumnName("seller_id");
-            entity.Property(e => e.Status).IsRequired().HasDefaultValueSql("'draft'::text").HasColumnName("status");
-            entity.Property(e => e.Title).IsRequired().HasColumnName("title");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("now()").HasColumnName("updated_at");
 
-            // ✅ mirror ràng buộc của DB
+            // FK nullable => optional (đúng yêu cầu: có thể null 1 trong 2)
+            entity.Property(e => e.BatteryId).HasColumnName("battery_id");
+            entity.Property(e => e.VehicleId).HasColumnName("vehicle_id");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+
+            entity.Property(e => e.Description).HasColumnName("description");
+
+            // Listing.PriceVnd: chỉ để hiển thị cho admin (mirror), không dùng để bán
+            entity.Property(e => e.PriceVnd)
+                .HasPrecision(14)
+                .HasColumnName("price_vnd");
+
+            entity.Property(e => e.SellerId).HasColumnName("seller_id");
+
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasDefaultValueSql("'draft'::text")
+                .HasColumnName("status");
+
+            entity.Property(e => e.Title)
+                .IsRequired()
+                .HasColumnName("title");
+
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("updated_at");
+
+            // ---- ✅ RÀNG BUỘC QUAN TRỌNG (PA1): phải có BatteryId hoặc VehicleId ----
             entity.HasCheckConstraint("ck_listings_has_target",
                 "battery_id IS NOT NULL OR vehicle_id IS NOT NULL");
 
-            // ✅ Quan hệ optional + không xoá cascade
-            entity.HasOne(d => d.Battery)
-                  .WithMany(p => p.Listings)                 // đổi từ WithOne -> WithMany
-                  .HasForeignKey(d => d.BatteryId)
-                  .IsRequired(false)
-                  .OnDelete(DeleteBehavior.Restrict)
-                  .HasConstraintName("listings_battery_id_fkey");
+            // ---- Relationships (giữ như PA2) ----
+            entity.HasOne(d => d.ApprovedByNavigation).WithMany(p => p.ListingApprovedByNavigations)
+                .HasForeignKey(d => d.ApprovedBy)
+                .HasConstraintName("listings_approved_by_fkey");
 
-            entity.HasOne(d => d.Vehicle)
-                  .WithMany(p => p.Listings)                 // đổi từ WithOne -> WithMany
-                  .HasForeignKey(d => d.VehicleId)
-                  .IsRequired(false)
-                  .OnDelete(DeleteBehavior.Restrict)
-                  .HasConstraintName("listings_vehicle_id_fkey");
+            // 🔧 Battery: 1-n (Battery -> Listings)
+            entity.HasOne(d => d.Battery).WithMany(p => p.Listing)
+                .HasForeignKey(d => d.BatteryId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("listings_battery_id_fkey");
 
-            entity.HasOne(d => d.Seller)
-                  .WithMany(p => p.ListingSellers)
-                  .HasForeignKey(d => d.SellerId)
-                  .OnDelete(DeleteBehavior.Restrict)
-                  .HasConstraintName("listings_seller_id_fkey");
+            entity.HasOne(d => d.Seller).WithMany(p => p.ListingSellers)
+                .HasForeignKey(d => d.SellerId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("listings_seller_id_fkey");
 
-            entity.HasOne(d => d.ApprovedByNavigation)
-                  .WithMany(p => p.ListingApprovedByNavigations)
-                  .HasForeignKey(d => d.ApprovedBy)
-                  .HasConstraintName("listings_approved_by_fkey");
+            entity.HasOne(d => d.Vehicle).WithMany(p => p.Listing)
+                .HasForeignKey(d => d.VehicleId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("listings_vehicle_id_fkey");
+
+            // (Tuỳ chọn) chặn EF ghi vào Listing.PriceVnd nếu bạn chỉ dùng để hiển thị:
+            // var listingPrice = entity.Property(l => l.PriceVnd).Metadata;
+            // listingPrice.SetBeforeSaveBehavior(PropertySaveBehavior.Ignore);
+            // listingPrice.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
         });
-
 
         modelBuilder.Entity<Order>(entity =>
         {
@@ -221,13 +250,18 @@ public partial class EVBatteryTradingContext : DbContext
 
             entity.ToTable("orders");
 
+            entity.HasIndex(e => e.BatteryId, "idx_orders_battery_id");
+
             entity.HasIndex(e => e.BuyerId, "idx_orders_buyer");
+
+            entity.HasIndex(e => e.VehicleId, "idx_orders_vehicle_id");
 
             entity.HasIndex(e => e.ListingId, "orders_listing_id_key").IsUnique();
 
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("id");
+            entity.Property(e => e.BatteryId).HasColumnName("battery_id");
             entity.Property(e => e.BuyerId).HasColumnName("buyer_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
@@ -243,6 +277,12 @@ public partial class EVBatteryTradingContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
+            entity.Property(e => e.VehicleId).HasColumnName("vehicle_id");
+
+            entity.HasOne(d => d.Battery).WithMany(p => p.Orders)
+                .HasForeignKey(d => d.BatteryId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("orders_battery_id_fkey");
 
             entity.HasOne(d => d.Buyer).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.BuyerId)
@@ -251,8 +291,13 @@ public partial class EVBatteryTradingContext : DbContext
 
             entity.HasOne(d => d.Listing).WithOne(p => p.Order)
                 .HasForeignKey<Order>(d => d.ListingId)
-                .OnDelete(DeleteBehavior.Restrict)
+                .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("orders_listing_id_fkey");
+
+            entity.HasOne(d => d.Vehicle).WithMany(p => p.Orders)
+                .HasForeignKey(d => d.VehicleId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("orders_vehicle_id_fkey");
         });
 
         modelBuilder.Entity<Payment>(entity =>
@@ -278,9 +323,7 @@ public partial class EVBatteryTradingContext : DbContext
                 .HasColumnName("method");
             entity.Property(e => e.OrderId).HasColumnName("order_id");
             entity.Property(e => e.PaidAt).HasColumnName("paid_at");
-            entity.Property(e => e.ProviderTxnId)
-            .HasColumnName("provider_txn_id")
-            .IsRequired(false);
+            entity.Property(e => e.ProviderTxnId).HasColumnName("provider_txn_id");
             entity.Property(e => e.Status)
                 .IsRequired()
                 .HasDefaultValueSql("'pending'::text")
@@ -438,6 +481,10 @@ public partial class EVBatteryTradingContext : DbContext
                 .HasColumnName("model");
             entity.Property(e => e.OdometerKm).HasColumnName("odometer_km");
             entity.Property(e => e.OwnerId).HasColumnName("owner_id");
+            entity.Property(e => e.PriceVnd)
+                .HasPrecision(18)
+                .HasColumnName("price_vnd")
+                .IsRequired();
             entity.Property(e => e.Status)
                 .IsRequired()
                 .HasDefaultValueSql("'available'::text")

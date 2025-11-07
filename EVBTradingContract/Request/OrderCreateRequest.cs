@@ -9,6 +9,7 @@ namespace EVBTradingContract.Request
     public class OrderCreateRequest
     {
         public Guid BuyerId { get; set; }
-        public Guid ListingId { get; set; }
+        public Guid? BatteryId { get; set; }
+        public Guid? VehicleId { get; set; }
     }
 }

@@ -3,6 +3,7 @@ using Repositories.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -40,6 +41,8 @@ namespace Repositories.Repository
                 query = query.Where(u => u.AvatarUrl == battery.AvatarUrl);
             if (battery.Status.HasValue)
                 query = query.Where(b => b.Status == battery.Status);
+            if (battery.PriceVnd > 0)
+                query = query.Where(b => b.PriceVnd == battery.PriceVnd);
             return query.OrderBy(b => b.Id);
             //cần phải .ToList() ở service để thực thi câu query
         }
