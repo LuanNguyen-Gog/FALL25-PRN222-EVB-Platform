@@ -18,7 +18,7 @@ namespace EVB_Project.API.Controllers
             _svc = svc;
         }
 
-        [HttpPost("{orderId: guid}")]
+        [HttpPost("{orderId:guid}")]
         public async Task<ActionResult<ApiResponse<ContractResponse>>> Upsert(Guid orderId, [FromBody] ContractRequest req, CancellationToken ct)
         {
             var res = await _svc.UpsertForOrderAsync(orderId, req.ContractFileUrl, ct);
@@ -32,7 +32,7 @@ namespace EVB_Project.API.Controllers
             return res.Success ? Ok(res) : BadRequest(res);
         }
 
-        [HttpGet("{orderId: guid}")]
+        [HttpGet("{orderId:guid}")]
         public async Task<ActionResult<ApiResponse<ContractResponse>>> Get(Guid orderId, CancellationToken ct)
         {
             var res = await _svc.GetByOrderAsync(orderId, ct);

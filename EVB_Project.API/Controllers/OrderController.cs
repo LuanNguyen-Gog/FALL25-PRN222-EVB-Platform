@@ -39,7 +39,7 @@ namespace EVB_Project.API.Controllers
             return Ok(o);
         }
 
-        [HttpGet("search/{buyerId:guid}")]
+        [HttpGet("{buyerId:guid}/search")]
         public async Task<ActionResult<ApiResponse<object>>> Search(
             [FromQuery] Guid? buyerId, [FromQuery] string? status,
             [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
