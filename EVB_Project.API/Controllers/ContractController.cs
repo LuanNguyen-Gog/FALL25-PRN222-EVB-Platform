@@ -18,21 +18,21 @@ namespace EVB_Project.API.Controllers
             _svc = svc;
         }
 
-        [HttpPost]
+        [HttpPost("{orderId: guid}")]
         public async Task<ActionResult<ApiResponse<ContractResponse>>> Upsert(Guid orderId, [FromBody] ContractRequest req, CancellationToken ct)
         {
             var res = await _svc.UpsertForOrderAsync(orderId, req.ContractFileUrl, ct);
             return res.Success ? Ok(res) : BadRequest(res);
         }
 
-        [HttpPatch("sign")]
+        [HttpPatch("sign/{orderId:guid}")]
         public async Task<ActionResult<ApiResponse<ContractResponse>>> Sign(Guid orderId, CancellationToken ct)
         {
             var res = await _svc.SignAsync(orderId, ct);
             return res.Success ? Ok(res) : BadRequest(res);
         }
 
-        [HttpGet]
+        [HttpGet("{orderId: guid}")]
         public async Task<ActionResult<ApiResponse<ContractResponse>>> Get(Guid orderId, CancellationToken ct)
         {
             var res = await _svc.GetByOrderAsync(orderId, ct);
