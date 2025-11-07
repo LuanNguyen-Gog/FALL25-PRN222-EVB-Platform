@@ -57,9 +57,10 @@ public sealed class VNPayService : IVNPayService
             return Fail<VNPayCreateResponse>("Order not found or not in pending status");
 
         // b) Lấy số tiền (price từ Listing)
-        var amountVnd = await _orderRepository.GetListingPriceByOrderIdAsync(orderId);
+        var amountVnd = await _orderRepository.GetPrice(order.Id);
+
         if (!amountVnd.HasValue || amountVnd.Value <= 0)
-            return Fail<VNPayCreateResponse>("Listing price not found or invalid");
+            return Fail<VNPayCreateResponse>("Asset price not found or invalid");
 
         // c) Ghi/đặt Payment = Pending (repo của bạn có sẵn)
         await _paymentRepository.UpsertPendingAsync(orderId, amountVnd.Value);  // đã SaveChanges bên trong :contentReference[oaicite:5]{index=5}

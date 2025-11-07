@@ -63,19 +63,31 @@ namespace Repositories.Repository
         public async Task<bool> ListingExistsAsync(Guid listingId, CancellationToken ct = default)
             => await _context.Set<Listing>().AnyAsync(x => x.Id == listingId, ct);
 
-        public async Task<decimal?> GetListingPriceByOrderIdAsync(Guid orderId, CancellationToken ct = default)
+        public async Task<decimal?> GetPrice(Guid orderId, CancellationToken ct = default)
         {
-            var listingId = await _context.Orders
-                .Where(o => o.Id == orderId)
-                .Select(o => (Guid?)o.ListingId)
-                .FirstOrDefaultAsync(ct);
+            var order = await _context.Orders
+        .AsNoTracking()
+        .Where(o => o.Id == orderId)
+        .Select(o => new { o.BatteryId, o.VehicleId })
+        .FirstOrDefaultAsync(ct);
 
-            if (!listingId.HasValue) return null;
+            if (order == null) return null;
 
-            return await _context.Set<Listing>()
-                .Where(l => l.Id == listingId.Value)
-                .Select(l => (decimal?)l.PriceVnd)
-                .FirstOrDefaultAsync(ct);
+            if (order.BatteryId is Guid bId)
+                return await _context.Batteries
+                    .AsNoTracking()
+                    .Where(b => b.Id == bId)
+                    .Select(b => (decimal?)b.PriceVnd)
+                    .FirstOrDefaultAsync(ct);
+
+            if (order.VehicleId is Guid vId)
+                return await _context.Vehicles
+                    .AsNoTracking()
+                    .Where(v => v.Id == vId)
+                    .Select(v => (decimal?)v.PriceVnd)
+                    .FirstOrDefaultAsync(ct);
+
+            return null;
         }
     }
 }
