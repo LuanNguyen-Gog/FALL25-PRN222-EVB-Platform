@@ -17,5 +17,9 @@ namespace Services.Interface
         Task<ApiResponse<OrderResponse>> UpdateStatusAsync(Guid id, OrderStatus newStatus, CancellationToken ct = default);
         Task<ApiResponse<OrderResponse>> OnPaymentSucceededAsync(Guid orderId, CancellationToken ct = default);
         Task<ApiResponse<OrderResponse>> OnPaymentFailedAsync(Guid orderId, CancellationToken ct = default);
+        Task<ApiResponse<OrderAndContractResponse>> ConfirmPaymentSuccessAsync(
+        Guid orderId, CancellationToken ct = default);
+        Task<ApiResponse<OrderAndContractResponse>> HandleContractAcceptedAsync(Guid orderId, CancellationToken ct = default);
+        Task<ApiResponse<OrderAndContractResponse>> HandleContractCancelledAsync(Guid orderId, string? reason, CancellationToken ct = default);
     }
 }

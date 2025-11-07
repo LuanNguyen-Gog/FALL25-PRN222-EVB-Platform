@@ -278,7 +278,9 @@ public partial class EVBatteryTradingContext : DbContext
                 .HasColumnName("method");
             entity.Property(e => e.OrderId).HasColumnName("order_id");
             entity.Property(e => e.PaidAt).HasColumnName("paid_at");
-            entity.Property(e => e.ProviderTxnId).HasColumnName("provider_txn_id");
+            entity.Property(e => e.ProviderTxnId)
+            .HasColumnName("provider_txn_id")
+            .IsRequired(false);
             entity.Property(e => e.Status)
                 .IsRequired()
                 .HasDefaultValueSql("'pending'::text")
@@ -487,6 +489,11 @@ public partial class EVBatteryTradingContext : DbContext
         v => System.Enum.Parse<PaymentMethod>(v, true)             // "vnpay" -> PaymentMethod.VnPay
         );
 
+        var contractStatusConv = new ValueConverter<ContractStatus, string>(
+            v => v.ToString().ToLowerInvariant(),
+            v => System.Enum.Parse<ContractStatus>(v, true)
+        );
+
         // 2) Áp converter + text cho từng entity
         modelBuilder.Entity<User>()
             .Property(u => u.Status)
@@ -529,6 +536,19 @@ public partial class EVBatteryTradingContext : DbContext
             .HasColumnName("status")
             .HasColumnType("text")
             .HasConversion(complaintStatusConv);
+
+        modelBuilder.Entity<Contract>()
+            .Property(c => c.Status)
+            .HasColumnName("status")
+            .HasColumnType("text")
+            .HasConversion(contractStatusConv);
+
+        // 3) Áp cho Payment.Method (text) – bạn đã có biến paymentMethodConv ở trên
+        modelBuilder.Entity<Payment>()
+            .Property(p => p.Method)
+            .HasColumnName("method")
+            .HasColumnType("text")
+            .HasConversion(paymentMethodConv);
     }
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }

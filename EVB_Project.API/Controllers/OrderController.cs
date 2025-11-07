@@ -3,6 +3,7 @@ using EVBTradingContract.Request;
 using EVBTradingContract.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Repositories.Models;
 using Services.Implement;
 using Services.Interface;
 
@@ -18,6 +19,9 @@ namespace EVB_Project.API.Controllers
         {
             _svc = svc;
         }
+        public sealed record PaymentConfirmRequest(string? ProviderTxnId, decimal? AmountVnd);
+        public sealed record ContractCancelRequest(string? Reason);
+
 
         [HttpPost("create-order")]
         public async Task<ActionResult<ApiResponse<OrderResponse>>> Create([FromBody] OrderCreateRequest req, CancellationToken ct)
@@ -53,6 +57,44 @@ namespace EVB_Project.API.Controllers
 
             var o = await _svc.UpdateStatusAsync(id, newStatus, ct);
             return Ok(o);
+        }
+        /// <summary>
+        /// VNPay báo thành công (hoặc FE test): giữ tiền (Success), tạo draft contract, Order -> Processing
+        /// </summary>
+        [HttpPost("{orderId:guid}/payment/success")]
+        [AllowAnonymous] // để IPN hoặc FE test có thể gọi. Muốn khóa lại -> thay bằng [Authorize]
+        public async Task<ActionResult<ApiResponse<OrderAndContractResponse>>> PaymentSuccess(
+            Guid orderId, CancellationToken ct)
+        {
+            var res = await _svc.ConfirmPaymentSuccessAsync(orderId, ct);
+            return res.Success ? Ok(res) : BadRequest(res);
+        }
+
+        /// <summary>
+        /// Buyer click-to-accept hợp đồng: Order -> Completed, giữ nguyên payment = Success
+        /// </summary>
+        [HttpPost("{orderId:guid}/contract/accept")]
+        [Authorize] // tuỳ bạn, có thể AllowAnonymous khi thử nghiệm
+        public async Task<ActionResult<ApiResponse<OrderAndContractResponse>>> ContractAccept(
+            Guid orderId,
+            CancellationToken ct)
+        {
+            var res = await _svc.HandleContractAcceptedAsync(orderId, ct);
+            return res.Success ? Ok(res) : BadRequest(res);
+        }
+
+        /// <summary>
+        /// Hợp đồng thất bại/huỷ: Payment -> Refunded, Order -> Cancelled
+        /// </summary>
+        [HttpPost("{orderId:guid}/contract/cancel")]
+        [Authorize] // tuỳ nhu cầu
+        public async Task<ActionResult<ApiResponse<OrderAndContractResponse>>> ContractCancel(
+            Guid orderId,
+            [FromBody] ContractCancelRequest? req,
+            CancellationToken ct)
+        {
+            var res = await _svc.HandleContractCancelledAsync(orderId, req?.Reason, ct);
+            return res.Success ? Ok(res) : BadRequest(res);
         }
     }
 }

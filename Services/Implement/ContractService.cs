@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Repositories.Enum.Enum;
 
 namespace Services.Implement
 {
@@ -97,19 +98,21 @@ namespace Services.Implement
                 if (contract == null)
                     return new ApiResponse<ContractResponse> { Success = false, Message = "Contract not found" };
 
-                if (contract.SignedAt != null)
+                if (contract.Status != ContractStatus.Draft)
                     return new ApiResponse<ContractResponse> { Success = false, Message = "Contract already signed" };
 
                 var order = await _orderRepo.GetByIdAsync(orderId);
                 if (order == null)
                     return new ApiResponse<ContractResponse> { Success = false, Message = "Order not found" };
 
-                if (order.Status != Repositories.Enum.Enum.OrderStatus.Processing &&
-                    order.Status != Repositories.Enum.Enum.OrderStatus.Completed)
+                // chỉ cho ký nếu order đang ở trạng thái Processing
+                if (order.Status != Repositories.Enum.Enum.OrderStatus.Processing)
                     return new ApiResponse<ContractResponse> { Success = false, Message = "Order must be paid before signing" };
 
+                // buyer ký -> contract có hiệu lực
                 contract.SignedAt = DateTime.UtcNow;
                 contract.UpdatedAt = DateTime.UtcNow;
+                contract.Status = ContractStatus.Active;
                 await _repo.UpdateAsync(contract);
 
                 return new ApiResponse<ContractResponse>
@@ -131,6 +134,30 @@ namespace Services.Implement
             var c = await _repo.GetByOrderIdAsync(orderId, ct);
             if (c == null) return new ApiResponse<ContractResponse> { Success = false, Message = "Contract not found" };
             return new ApiResponse<ContractResponse> { Success = true, Data = c.Adapt<ContractResponse>() };
+        }
+
+        public async Task<ApiResponse<ContractResponse>> CancelAsync(Guid orderId, string? reason, CancellationToken ct = default)
+        {
+            try
+            {
+                var c = await _repo.GetTrackingByOrderIdAsync(orderId, ct);
+                if (c == null) return new ApiResponse<ContractResponse> { Success = false, Message = "Contract not found" };
+                if (c.SignedAt != null) return new ApiResponse<ContractResponse> { Success = false, Message = "Contract already signed" };
+
+                // nếu có cột status text: "cancelled"
+                // nếu dùng enum + converter: gán enum tương ứng
+                c.Status = ContractStatus.Cancelled;
+                c.UpdatedAt = DateTime.UtcNow;
+                // (tuỳ chọn) c.Status = "cancelled"; c.CancelReason = reason;
+                await _repo.UpdateAsync(c);
+
+                return new ApiResponse<ContractResponse> { Success = true, Message = "Contract cancelled", Data = c.Adapt<ContractResponse>() };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cancel contract failed");
+                return new ApiResponse<ContractResponse> { Success = false, Message = ex.Message };
+            }
         }
     }
 }

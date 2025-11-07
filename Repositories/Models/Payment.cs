@@ -18,7 +18,7 @@ public partial class Payment
 
     public DateTime? PaidAt { get; set; }
 
-    public string ProviderTxnId { get; set; }
+    public string? ProviderTxnId { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

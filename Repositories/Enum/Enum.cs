@@ -34,12 +34,9 @@ namespace Repositories.Enum
         }
         public enum ContractStatus
         {
-            AwaitingBuyer = 0,     // người mua chưa ký
-            AwaitingSeller = 1,    // người bán chưa ký
-            Active = 2,            // cả hai bên đã ký, có hiệu lực
-            Completed = 3,         // hợp đồng hoàn tất
-            Cancelled = 4,         // bị hủy (1 hoặc cả hai bên)
-            Expired = 5            // hết hạn hoặc không còn hiệu lực
+            Draft = 0,            // vừa được tạo sau khi thanh toán, chưa ai ký
+            Active = 1,           // cả hai bên đã ký, có hiệu lực
+            Cancelled = 2        // bị hủy (1 hoặc cả hai bên)      
         }
 
     }
