@@ -32,11 +32,11 @@ public partial class Listing
 
     public virtual User ApprovedByNavigation { get; set; }
 
-    public virtual Battery Battery { get; set; }
+    public virtual Battery? Battery { get; set; }
 
-    public virtual Order Order { get; set; }
+    public virtual Order? Order { get; set; }
 
     public virtual User Seller { get; set; }
 
-    public virtual Vehicle Vehicle { get; set; }
+    public virtual Vehicle? Vehicle { get; set; }
 }

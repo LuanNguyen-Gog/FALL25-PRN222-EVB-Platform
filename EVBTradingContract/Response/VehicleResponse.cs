@@ -14,6 +14,7 @@ namespace EVBTradingContract.Response
         public string Model { get; set; }
         public int Year { get; set; }
         public int OdometerKm { get; set; }
+        public string? AvatarUrl { get; set; }
         public string? Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

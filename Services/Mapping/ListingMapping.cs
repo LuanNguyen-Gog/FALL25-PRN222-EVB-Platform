@@ -15,9 +15,15 @@ namespace Services.Mapping
         public void Register(TypeAdapterConfig config)
         {
             // Request → Entity
-            config.NewConfig<ListingGetRequest, Listing>();
+            config.NewConfig<ListingGetRequest, Listing>()
+                .IgnoreNonMapped(true);
+
             // Entity → Response
-            config.NewConfig<Listing, ListingResponse>();
+            config.NewConfig<Listing, ListingResponse>()
+                .Map(dest => dest.ListingId, src => src.Id)
+                .Map(dest => dest.Status, src => src.Status.ToString()) // nếu Status là enum
+                .IgnoreNonMapped(true)
+                .Compile();
         }
     }
 }

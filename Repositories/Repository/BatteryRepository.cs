@@ -36,6 +36,8 @@ namespace Repositories.Repository
                 query = query.Where(b => b.NominalVoltageV == battery.NominalVoltageV);
             if (!string.IsNullOrEmpty(battery.CompatibilityNote))
                 query = query.Where(b => b.CompatibilityNote == battery.CompatibilityNote);
+            if (!string.IsNullOrWhiteSpace(battery.AvatarUrl))
+                query = query.Where(u => u.AvatarUrl == battery.AvatarUrl);
             if (battery.Status.HasValue)
                 query = query.Where(b => b.Status == battery.Status);
             return query.OrderBy(b => b.Id);

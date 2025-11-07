@@ -10,7 +10,6 @@ namespace EVB_Project.API.Controllers
 {
     [ApiController]
     [Route("api/payments")] // số nhiều
-    //[Authorize(Roles = "member")]
     public sealed class PaymentsController : ControllerBase
     {
         private readonly IVNPayService _vnPay;

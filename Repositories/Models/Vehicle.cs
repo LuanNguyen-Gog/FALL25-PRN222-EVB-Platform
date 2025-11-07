@@ -19,11 +19,13 @@ public partial class Vehicle
     public int? OdometerKm { get; set; }
     public AssetStatus? Status { get; set; } // Enum
 
+    public string? AvatarUrl { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
 
-    public virtual Listing Listing { get; set; }
+    public virtual ICollection<Listing> Listings { get; set; } = new List<Listing>();
 
     public virtual User Owner { get; set; }
 }

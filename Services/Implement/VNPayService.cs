@@ -38,11 +38,12 @@ public sealed class VNPayService : IVNPayService
         _paymentRepository = paymentRepository;
 
         // Init VNPay 1 lần – dùng cấu hình của bạn
+        var s = cfg.GetSection("VNPay");  // <== đúng section
         _vnpay.Initialize(
-            cfg["Vnpay:TmnCode"]!,
-            cfg["Vnpay:HashSecret"]!,
-            cfg["Vnpay:BaseUrl"] ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
-            cfg["Vnpay:ReturnUrl"]!
+            s["TmnCode"]!,                          // TMN
+            s["HashSecret"]!,                       // Secret
+            s["PaymentUrl"] ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",  // <== đúng key
+            s["ReturnUrl"]!                         // ReturnUrl
         );
     }
 
@@ -93,7 +94,11 @@ public sealed class VNPayService : IVNPayService
     // 2) Xử lý callback / IPN
     public async Task<ApiResponse<VNPayReturnResponse>> ProcessIpnAction(IQueryCollection query)
     {
+        // Log thô để debug khi cần
+        _logger.LogInformation("VNPay IPN raw: {Q}", string.Join("&", query.Select(kv => $"{kv.Key}={kv.Value}")));
+
         var result = _vnpay.GetPaymentResult(query);
+
         var resp = new VNPayReturnResponse
         {
             Success = result.IsSuccess,
@@ -106,39 +111,54 @@ public sealed class VNPayService : IVNPayService
         };
 
         if (!result.IsSuccess)
-            return Fail(resp, result.PaymentResponse.Description); // trả Data kèm message rõ
+            return Fail(resp, result.PaymentResponse.Description);
 
-        // Lấy orderId từ Description
         if (!Guid.TryParse(result.Description, out var orderId))
             return Fail(resp, "Invalid order id in VNPay description");
 
         var order = await _orderRepository.GetByIdAsync(orderId);
-        if (order == null)
+        if (order is null)
             return Fail(resp, $"Order {orderId} not found");
 
         // vnp_Amount là số *100*
-        var paidVnd = 0m;
-        if (decimal.TryParse(resp.Amount, out var raw))
+        decimal paidVnd = 0;
+        if (decimal.TryParse(resp.Amount, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var raw))
             paidVnd = raw / 100m;
 
-        // Lấy/ghi Payment
-        var payment = await _paymentRepository.GetByOrderIdAsync(orderId)
-                   ?? new Payment { Id = Guid.NewGuid(), OrderId = orderId, CreatedAt = DateTime.UtcNow };
+        // Lấy/ghi Payment (UPsert đúng chiều)
+        var payment = await _paymentRepository.GetByOrderIdAsync(orderId);
+        if (payment is null)
+        {
+            payment = new Payment
+            {
+                Id = Guid.NewGuid(),
+                OrderId = orderId,
+                CreatedAt = DateTime.UtcNow
+            };
+            payment.AmountVnd = paidVnd;
+            payment.Method = PaymentMethod.VnPay;
+            payment.Status = PaymentStatus.Success;
+            payment.ProviderTxnId = resp.TransactionNo;
+            payment.PaidAt = DateTime.UtcNow;
+            payment.UpdatedAt = DateTime.UtcNow;
 
-        payment.AmountVnd = paidVnd > 0 ? paidVnd : payment.AmountVnd;
-        payment.Method = PaymentMethod.VnPay;
-        payment.Status = PaymentStatus.Success;
-        payment.ProviderTxnId = resp.TransactionNo;
-        payment.PaidAt = DateTime.UtcNow;
-        payment.UpdatedAt = DateTime.UtcNow;
+            await _paymentRepository.CreateAsync(payment); // <== đúng: tạo mới
+        }
+        else
+        {
+            payment.AmountVnd = paidVnd > 0 ? paidVnd : payment.AmountVnd;
+            payment.Method = PaymentMethod.VnPay;
+            payment.Status = PaymentStatus.Success;
+            payment.ProviderTxnId = resp.TransactionNo;
+            payment.PaidAt = DateTime.UtcNow;
+            payment.UpdatedAt = DateTime.UtcNow;
 
+            await _paymentRepository.UpdateAsync(payment); // <== chỉ update khi đã tồn tại
+        }
+
+        // Cập nhật Order
         order.Status = OrderStatus.Completed;
         order.UpdatedAt = DateTime.UtcNow;
-
-        // Repo của bạn: UpdateAsync có sẵn (tự SaveChanges) 
-        if (await _paymentRepository.GetByOrderIdAsync(orderId) is null)
-            await _paymentRepository.UpdateAsync(payment);
-
         await _orderRepository.UpdateAsync(order);
 
         return Ok(resp, "IPN processed successfully");

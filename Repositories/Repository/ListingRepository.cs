@@ -20,9 +20,9 @@ namespace Repositories.Repository
                 query = query.Where(b => b.Id == listing.Id);
             if (listing.SellerId != Guid.Empty)
                 query = query.Where(b => b.SellerId == listing.SellerId);
-            if (listing.VehicleId != Guid.Empty)
+            if (listing.VehicleId.HasValue)
                 query = query.Where(b => b.VehicleId == listing.VehicleId);
-            if (listing.BatteryId != Guid.Empty)
+            if (listing.BatteryId.HasValue)
                 query = query.Where(b => b.BatteryId == listing.BatteryId);
             if (!string.IsNullOrEmpty(listing.Title))
                 query = query.Where(b => b.Title == listing.Title);
