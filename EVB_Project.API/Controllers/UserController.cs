@@ -36,7 +36,7 @@ namespace EVB_Project.API.Controllers
             return Ok(result);
         }
         [HttpGet]
-        [Route("{userId}")]
+        [Route("{userId:guid}")]
         public async Task<ActionResult<ApiResponse<UserResponse>>> GetUserById([FromRoute] Guid userId)
         {
             var result = await _userService.GetUserById(userId);
@@ -44,13 +44,13 @@ namespace EVB_Project.API.Controllers
             return Ok(result);
         }
         [HttpDelete]
-        [Route("{userId}")]
+        [Route("{userId:guid}")]
         public async Task<ApiResponse<bool>> DeleteUser([FromRoute] Guid userId)
         {
             return await _userService.DeleteUser(userId);
         }
         [HttpPut]
-        [Route("{userId}")]
+        [Route("{userId:guid}")]
         public async Task<ApiResponse<bool>> UpdateUser([FromRoute] Guid userId, [FromBody] UserRequest request)
         {
             return await _userService.UpdateUser(userId, request);
