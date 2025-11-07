@@ -10,7 +10,7 @@ namespace EVB_Project.API.Controllers
 {
     [Route("api/listings")]
     [ApiController]
-    [Authorize(Roles = "member")]
+    [Authorize(Roles = "admin,member")]
     public class ListingController : ControllerBase
     {
         private readonly IListingService _listingService;
@@ -19,6 +19,7 @@ namespace EVB_Project.API.Controllers
             _listingService = listingService;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<List<ListingResponse>>> GetAllListing([FromQuery] ListingGetRequest request)
         {
@@ -26,6 +27,7 @@ namespace EVB_Project.API.Controllers
             return Ok(result);
         }
 
+        [AllowAnonymous]
         [HttpGet("{listingId:guid}")]
         public async Task<ActionResult<ApiResponse<ListingResponse>>> GetById([FromRoute] Guid listingId)
         {
