@@ -13,5 +13,6 @@ namespace Services.Interface
         Task<ApiResponse<ContractResponse>> UpsertForOrderAsync(Guid orderId, string fileUrl, CancellationToken ct = default);
         Task<ApiResponse<ContractResponse>> SignAsync(Guid orderId, CancellationToken ct = default);
         Task<ApiResponse<ContractResponse>> GetByOrderAsync(Guid orderId, CancellationToken ct = default);
+        Task<ApiResponse<ContractResponse>> CancelAsync(Guid orderId, string? reason, CancellationToken ct = default);
     }
 }
