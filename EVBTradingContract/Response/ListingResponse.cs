@@ -21,11 +21,9 @@ namespace EVBTradingContract.Response
 
         public decimal PriceVnd { get; set; }
 
-        public decimal AiSuggestedPriceVnd { get; set; }
-
         public string? Status { get; set; }
 
-        public long ApprovedBy { get; set; }
+        public Guid? ApprovedBy { get; set; }
 
         public DateTime ApprovedAt { get; set; }
 

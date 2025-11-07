@@ -21,6 +21,17 @@
         Timeout=15;
         Command Timeout=30;
         KeepAlive=30
+
+    # --- Supabase (Storage) ---
+      SUPABASE_URL: https://jiysbiujvatpvxxaivdt.supabase.co
+      SUPABASE_BUCKET: evb
+      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppeXNiaXVqdmF0cHZ4eGFpdmR0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjQ5MDQzNiwiZXhwIjoyMDc4MDY2NDM2fQ.f-IEtY_VjtmslGgVc0D0jjhRFY7-W3dvMGIoahmn2qo
+
+      # (tuỳ chọn) folder chuẩn hoá cho avatar:
+      SUPABASE_AVATAR_PREFIX_USERS: avatars/users
+      SUPABASE_AVATAR_PREFIX_VEHICLES: avatars/vehicles
+      SUPABASE_AVATAR_PREFIX_BATTERIES: avatars/batteries
+
     networks:
       - appnet
 

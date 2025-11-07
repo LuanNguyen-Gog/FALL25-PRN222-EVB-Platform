@@ -53,6 +53,7 @@ public partial class EVBatteryTradingContext : DbContext
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("id");
+            entity.Property(e => e.AvatarUrl).HasColumnName("avatar_url");
             entity.Property(e => e.BatteryCapacityKwh)
                 .HasPrecision(7, 3)
                 .HasColumnName("battery_capacity_kwh");
@@ -140,19 +141,23 @@ public partial class EVBatteryTradingContext : DbContext
                 .HasColumnName("created_at");
             entity.Property(e => e.OrderId).HasColumnName("order_id");
             entity.Property(e => e.SignedAt).HasColumnName("signed_at");
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasDefaultValueSql("'draft'::text")
+                .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.Order).WithOne(p => p.Contract)
                 .HasForeignKey<Contract>(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("contracts_order_id_fkey");
         });
 
         modelBuilder.Entity<Listing>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("listings_pkey");
-
             entity.ToTable("listings");
 
             entity.HasIndex(e => e.PriceVnd, "idx_listings_price");
@@ -165,51 +170,50 @@ public partial class EVBatteryTradingContext : DbContext
                 .IsUnique()
                 .HasFilter("((vehicle_id IS NOT NULL) AND (status = ANY (ARRAY['pending'::text, 'active'::text])))");
 
-            entity.Property(e => e.Id)
-                .HasDefaultValueSql("gen_random_uuid()")
-                .HasColumnName("id");
+            entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
             entity.Property(e => e.ApprovedAt).HasColumnName("approved_at");
             entity.Property(e => e.ApprovedBy).HasColumnName("approved_by");
-            entity.Property(e => e.BatteryId).HasColumnName("battery_id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("now()")
-                .HasColumnName("created_at");
+            entity.Property(e => e.BatteryId).HasColumnName("battery_id");   // Guid?  => optional
+            entity.Property(e => e.VehicleId).HasColumnName("vehicle_id");   // Guid?  => optional
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()").HasColumnName("created_at");
             entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.PriceVnd)
-                .HasPrecision(14)
-                .HasColumnName("price_vnd");
+            entity.Property(e => e.PriceVnd).HasPrecision(14).HasColumnName("price_vnd");
             entity.Property(e => e.SellerId).HasColumnName("seller_id");
-            entity.Property(e => e.Status)
-                .IsRequired()
-                .HasDefaultValueSql("'draft'::text")
-                .HasColumnName("status");
-            entity.Property(e => e.Title)
-                .IsRequired()
-                .HasColumnName("title");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("now()")
-                .HasColumnName("updated_at");
-            entity.Property(e => e.VehicleId).HasColumnName("vehicle_id");
+            entity.Property(e => e.Status).IsRequired().HasDefaultValueSql("'draft'::text").HasColumnName("status");
+            entity.Property(e => e.Title).IsRequired().HasColumnName("title");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("now()").HasColumnName("updated_at");
 
-            entity.HasOne(d => d.ApprovedByNavigation).WithMany(p => p.ListingApprovedByNavigations)
-                .HasForeignKey(d => d.ApprovedBy)
-                .HasConstraintName("listings_approved_by_fkey");
+            // ✅ mirror ràng buộc của DB
+            entity.HasCheckConstraint("ck_listings_has_target",
+                "battery_id IS NOT NULL OR vehicle_id IS NOT NULL");
 
-            entity.HasOne(d => d.Battery).WithOne(p => p.Listing)
-                .HasForeignKey<Listing>(d => d.BatteryId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("listings_battery_id_fkey");
+            // ✅ Quan hệ optional + không xoá cascade
+            entity.HasOne(d => d.Battery)
+                  .WithMany(p => p.Listings)                 // đổi từ WithOne -> WithMany
+                  .HasForeignKey(d => d.BatteryId)
+                  .IsRequired(false)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .HasConstraintName("listings_battery_id_fkey");
 
-            entity.HasOne(d => d.Seller).WithMany(p => p.ListingSellers)
-                .HasForeignKey(d => d.SellerId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("listings_seller_id_fkey");
+            entity.HasOne(d => d.Vehicle)
+                  .WithMany(p => p.Listings)                 // đổi từ WithOne -> WithMany
+                  .HasForeignKey(d => d.VehicleId)
+                  .IsRequired(false)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .HasConstraintName("listings_vehicle_id_fkey");
 
-            entity.HasOne(d => d.Vehicle).WithOne(p => p.Listing)
-                .HasForeignKey<Listing>(d => d.VehicleId)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("listings_vehicle_id_fkey");
+            entity.HasOne(d => d.Seller)
+                  .WithMany(p => p.ListingSellers)
+                  .HasForeignKey(d => d.SellerId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .HasConstraintName("listings_seller_id_fkey");
+
+            entity.HasOne(d => d.ApprovedByNavigation)
+                  .WithMany(p => p.ListingApprovedByNavigations)
+                  .HasForeignKey(d => d.ApprovedBy)
+                  .HasConstraintName("listings_approved_by_fkey");
         });
+
 
         modelBuilder.Entity<Order>(entity =>
         {
@@ -285,6 +289,7 @@ public partial class EVBatteryTradingContext : DbContext
 
             entity.HasOne(d => d.Order).WithOne(p => p.Payment)
                 .HasForeignKey<Payment>(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("payments_order_id_fkey");
         });
 
@@ -313,6 +318,7 @@ public partial class EVBatteryTradingContext : DbContext
 
             entity.HasOne(d => d.User).WithMany(p => p.RefreshTokens)
                 .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("refresh_tokens_user_id_fkey");
         });
 
@@ -339,10 +345,12 @@ public partial class EVBatteryTradingContext : DbContext
 
             entity.HasOne(d => d.Order).WithOne(p => p.Review)
                 .HasForeignKey<Review>(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("reviews_order_id_fkey");
 
             entity.HasOne(d => d.Reviewer).WithMany(p => p.Reviews)
                 .HasForeignKey(d => d.ReviewerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("reviews_reviewer_id_fkey");
         });
 
@@ -416,6 +424,7 @@ public partial class EVBatteryTradingContext : DbContext
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("id");
+            entity.Property(e => e.AvatarUrl).HasColumnName("avatar_url");
             entity.Property(e => e.Brand)
                 .IsRequired()
                 .HasColumnName("brand");
@@ -444,6 +453,7 @@ public partial class EVBatteryTradingContext : DbContext
 
         OnModelCreatingPartial(modelBuilder);
     }
+
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder)
     {
         // 1) Tạo converter cho từng enum (enum -> lowercase string)
@@ -476,21 +486,6 @@ public partial class EVBatteryTradingContext : DbContext
         v => v.ToString().ToLowerInvariant(),               // C# enum -> "vnpay"
         v => System.Enum.Parse<PaymentMethod>(v, true)             // "vnpay" -> PaymentMethod.VnPay
         );
-
-        // Áp converter & cấu hình cột "method"
-        modelBuilder.Entity<Payment>()
-            .Property(p => p.Method)
-            .HasColumnName("method")
-            .HasColumnType("text")
-            .HasConversion(paymentMethodConv)
-            // nếu muốn có mặc định khi INSERT mà chưa set Method:
-            .HasDefaultValueSql("'vnpay'::text"); // CHỌN 1 trong 2: DefaultValue hoặc DefaultValueSql
-
-        // Giữ amount_vnd là numeric(14,0)
-        modelBuilder.Entity<Payment>()
-            .Property(p => p.AmountVnd)
-            .HasColumnName("amount_vnd")
-            .HasPrecision(14);
 
         // 2) Áp converter + text cho từng entity
         modelBuilder.Entity<User>()

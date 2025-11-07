@@ -86,6 +86,9 @@ builder.Services.AddSingleton<IVnpay, Vnpay>();
 builder.Services.AddScoped<PaymentRepository>();
 builder.Services.AddScoped<IVNPayService, VNPayService>();
 
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IAvatarService, AvatarService>();
+
 // Configure JSON options to use string enums
 builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));

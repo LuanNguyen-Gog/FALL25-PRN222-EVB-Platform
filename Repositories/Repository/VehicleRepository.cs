@@ -28,6 +28,8 @@ namespace Repositories.Repository
                 query = query.Where(v => v.Year == vehicle.Year);
             if (vehicle.OdometerKm.HasValue)
                 query = query.Where(v => v.OdometerKm == vehicle.OdometerKm);
+            if (!string.IsNullOrWhiteSpace(vehicle.AvatarUrl))
+                query = query.Where(u => u.AvatarUrl == vehicle.AvatarUrl);
             if (vehicle.Status.HasValue)
                 query = query.Where(v => v.Status == vehicle.Status);
             return query.OrderBy(v => v.Id);

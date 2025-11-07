@@ -25,8 +25,6 @@ namespace EVBTradingContract.Request
 
         public decimal? PriceVnd { get; set; }
 
-        public decimal? AiSuggestedPriceVnd { get; set; }
-
         public string? Status { get; set; }
 
         public long? ApprovedBy { get; set; }
