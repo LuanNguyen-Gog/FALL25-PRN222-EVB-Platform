@@ -32,6 +32,8 @@ namespace Repositories.Repository
                 query = query.Where(u => u.AvatarUrl == vehicle.AvatarUrl);
             if (vehicle.Status.HasValue)
                 query = query.Where(v => v.Status == vehicle.Status);
+            if (vehicle.PriceVnd > 0)
+                query = query.Where(v => v.PriceVnd == vehicle.PriceVnd);
             return query.OrderBy(v => v.Id);
            
         }

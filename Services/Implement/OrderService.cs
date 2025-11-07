@@ -1,4 +1,5 @@
 ﻿using EVBTradingContract.Common;
+using EVBTradingContract.Request;
 using EVBTradingContract.Response;
 using Mapster;
 using Microsoft.Extensions.Logging;
@@ -21,14 +22,18 @@ namespace Services.Implement
         private readonly PaymentRepository _payments;
         private readonly IContractService _contracts;
         private readonly ListingRepository _listings;
+        private readonly BatteryRepository _batteries;
+        private readonly VehicleRepository _vehicles;
 
-        public OrderService(OrderRepository repo, ILogger<OrderService> logger, PaymentRepository payments, IContractService contractService, ListingRepository listings)
+        public OrderService(OrderRepository repo, ILogger<OrderService> logger, PaymentRepository payments, IContractService contractService, ListingRepository listings, BatteryRepository batteries, VehicleRepository vehicles)
         {
             _repo = repo;
             _logger = logger;
             _payments = payments;
             _contracts = contractService;
             _listings = listings;
+            _batteries = batteries;
+            _vehicles = vehicles;
         }
 
         public async Task<ApiResponse<OrderAndContractResponse>> ConfirmPaymentSuccessAsync(
@@ -40,11 +45,22 @@ namespace Services.Implement
                 return new ApiResponse<OrderAndContractResponse> { Success = false, Message = "Order not found" };
 
             decimal? amountVnd = null;
-            if (order.ListingId != Guid.Empty)
+            if (order.VehicleId is Guid vId)
             {
-                var listing = await _listings.GetByIdAsync(order.ListingId);
-                amountVnd = listing?.PriceVnd;
+                var v = await _vehicles.GetByIdAsync(vId);
+                amountVnd = v?.PriceVnd;
             }
+            else if (order.BatteryId is Guid bId)
+            {
+                var b = await _batteries.GetByIdAsync(bId);
+                amountVnd = b?.PriceVnd;
+            }
+            else
+            {
+                return new ApiResponse<OrderAndContractResponse> { Success = false, Message = "Order has no associated vehicle or battery" };
+            }
+            if (amountVnd is null or <= 0)
+                return new ApiResponse<OrderAndContractResponse> { Success = false, Message = "Invalid asset price" };
 
             // Upsert Payment = Success
             var p = await _payments.GetByOrderIdAsync(orderId);
@@ -139,18 +155,41 @@ namespace Services.Implement
         }
 
         // Create (dùng lại GenericRepo.CreateAsync)
-        public async Task<ApiResponse<OrderResponse>> CreateAsync(Guid buyerId, Guid listingId, CancellationToken ct = default)
+        public async Task<ApiResponse<OrderResponse>> CreateAsync(OrderCreateRequest req, CancellationToken ct = default)
         {
             try
             {
-                if (!await _repo.ListingExistsAsync(listingId, ct))
-                    return new ApiResponse<OrderResponse> { Success = false, Message = "Listing not found" };
+                // 1) Validate input: chỉ được chọn 1 loại asset
+                var hasBattery = req.BatteryId.HasValue && req.BatteryId.Value != Guid.Empty;
+                var hasVehicle = req.VehicleId.HasValue && req.VehicleId.Value != Guid.Empty;
+
+                if (!hasBattery && !hasVehicle)
+                    return new ApiResponse<OrderResponse> { Success = false, Message = "Must provide either batteryId or vehicleId" };
+                if (hasBattery && hasVehicle)
+                    return new ApiResponse<OrderResponse> { Success = false, Message = "Provide only one: batteryId OR vehicleId" };
+
+                decimal? priceVnd = null;
+                if (hasBattery)
+                {
+                    var b = await _batteries.GetByIdAsync(req.BatteryId!.Value);
+                    if (b is null) return new ApiResponse<OrderResponse> { Success = false, Message = "Battery not found" };
+                    if (b.PriceVnd <= 0) return new ApiResponse<OrderResponse> { Success = false, Message = "Invalid battery price" };
+                    priceVnd = b.PriceVnd;
+                }
+                else // hasVehicle
+                {
+                    var v = await _vehicles.GetByIdAsync(req.VehicleId!.Value);
+                    if (v is null) return new ApiResponse<OrderResponse> { Success = false, Message = "Vehicle not found" };
+                    if (v.PriceVnd <= 0) return new ApiResponse<OrderResponse> { Success = false, Message = "Invalid vehicle price" };
+                    priceVnd = v.PriceVnd;
+                }
 
                 var entity = new Order
                 {
                     Id = Guid.NewGuid(),
-                    BuyerId = buyerId,
-                    ListingId = listingId,
+                    BuyerId = req.BuyerId,
+                    BatteryId = hasBattery ? req.BatteryId : null,
+                    VehicleId = hasVehicle ? req.VehicleId : null,
                     OrderDate = DateTime.UtcNow,
                     Status = OrderStatus.Pending,
                     CreatedAt = DateTime.UtcNow,

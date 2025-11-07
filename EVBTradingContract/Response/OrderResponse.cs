@@ -10,7 +10,8 @@ namespace EVBTradingContract.Response
     {
         public Guid Id { get; set; }
         public Guid BuyerId { get; set; }
-        public Guid ListingId { get; set; }
+        public Guid? BatteryId { get; set; }
+        public Guid? VehicleId { get; set; }
         public DateTime OrderDate { get; set; }
         public string Status { get; set; } = default!;
         public DateTime CreatedAt { get; set; }
