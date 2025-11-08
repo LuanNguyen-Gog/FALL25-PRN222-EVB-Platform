@@ -44,21 +44,8 @@ namespace Services.Implement
             if (order is null)
                 return new ApiResponse<OrderAndContractResponse> { Success = false, Message = "Order not found" };
 
-            decimal? amountVnd = null;
-            if (order.VehicleId is Guid vId)
-            {
-                var v = await _vehicles.GetByIdAsync(vId);
-                amountVnd = v?.PriceVnd;
-            }
-            else if (order.BatteryId is Guid bId)
-            {
-                var b = await _batteries.GetByIdAsync(bId);
-                amountVnd = b?.PriceVnd;
-            }
-            else
-            {
-                return new ApiResponse<OrderAndContractResponse> { Success = false, Message = "Order has no associated vehicle or battery" };
-            }
+            var amountVnd = await _repo.GetPrice(orderId, ct);
+      
             if (amountVnd is null or <= 0)
                 return new ApiResponse<OrderAndContractResponse> { Success = false, Message = "Invalid asset price" };
 
