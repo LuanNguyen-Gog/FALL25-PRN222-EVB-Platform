@@ -73,7 +73,7 @@ namespace EVB_Project.API.Controllers
         /// Buyer click-to-accept hợp đồng: Order -> Completed, giữ nguyên payment = Success
         /// </summary>
         [HttpPost("{orderId:guid}/contract/accept")]
-        [Authorize] // tuỳ bạn, có thể AllowAnonymous khi thử nghiệm
+        //[Authorize] // tuỳ bạn, có thể AllowAnonymous khi thử nghiệm
         public async Task<ActionResult<ApiResponse<OrderAndContractResponse>>> ContractAccept(
             Guid orderId,
             CancellationToken ct)
@@ -86,7 +86,7 @@ namespace EVB_Project.API.Controllers
         /// Hợp đồng thất bại/huỷ: Payment -> Refunded, Order -> Cancelled
         /// </summary>
         [HttpPost("{orderId:guid}/contract/cancel")]
-        [Authorize] // tuỳ nhu cầu
+        //[Authorize] // tuỳ nhu cầu
         public async Task<ActionResult<ApiResponse<OrderAndContractResponse>>> ContractCancel(
             Guid orderId,
             [FromBody] ContractCancelRequest? req,

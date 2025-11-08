@@ -89,5 +89,23 @@ namespace Repositories.Repository
 
             return null;
         }
+
+        public async Task<(string? BuyerEmail, string? SellerEmail)?> GetEmailsAsync(Guid orderId, CancellationToken ct = default)
+        {
+            var result = await _context.Orders
+                .Where(o => o.Id == orderId)
+                .Select(o => new
+                {
+                    BuyerEmail = o.Buyer != null ? o.Buyer.Email : null,
+                    SellerEmail = o.Listing != null && o.Listing.Seller != null ? o.Listing.Seller.Email : null
+                })
+                .FirstOrDefaultAsync(ct);
+
+            if (result == null)
+                return null;
+
+            return (result.BuyerEmail, result.SellerEmail);
+        }
+
     }
 }
