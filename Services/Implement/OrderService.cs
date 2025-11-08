@@ -24,8 +24,9 @@ namespace Services.Implement
         private readonly ListingRepository _listings;
         private readonly BatteryRepository _batteries;
         private readonly VehicleRepository _vehicles;
+        private readonly IEmailService _email;
 
-        public OrderService(OrderRepository repo, ILogger<OrderService> logger, PaymentRepository payments, IContractService contractService, ListingRepository listings, BatteryRepository batteries, VehicleRepository vehicles)
+        public OrderService(OrderRepository repo, ILogger<OrderService> logger, PaymentRepository payments, IContractService contractService, ListingRepository listings, BatteryRepository batteries, VehicleRepository vehicles, IEmailService email)
         {
             _repo = repo;
             _logger = logger;
@@ -34,6 +35,7 @@ namespace Services.Implement
             _listings = listings;
             _batteries = batteries;
             _vehicles = vehicles;
+            _email = email;
         }
 
         public async Task<ApiResponse<OrderAndContractResponse>> ConfirmPaymentSuccessAsync(
@@ -102,6 +104,52 @@ namespace Services.Implement
             var pay = await _payments.GetByOrderIdAsync(orderId);
             var fresh = await _repo.GetByIdAsync(orderId);
 
+            var emails = await _repo.GetEmailsAsync(orderId, ct);
+            var buyerEmail = emails?.BuyerEmail;
+            var sellerEmail = emails?.SellerEmail;
+            try
+            {
+                // TODO: Lấy đúng email buyer/seller theo mô hình của bạn.
+                // Nếu Order có điều hướng: fresh.Buyer.Email / fresh.Seller.Email
+                // Tạm thời minh hoạ 1 email người mua:
+                if (!string.IsNullOrWhiteSpace(buyerEmail))
+                {
+                    var subject = $"[EVB] Contract #{signed.Data?.Id} is ACTIVE";
+                    var body = $@"
+                <div style=""font-family:Arial,Helvetica,sans-serif"">
+                    <h3>Hợp đồng đã kích hoạt</h3>
+                    <p>Contract ID: <b>{signed.Data?.Id}</b></p>
+                    <p>Order ID: <b>{orderId}</b></p>
+                    <p>Trạng thái mới: <b>Active</b></p>
+                    {(signed.Data?.SignedAt != null ? $"<p>Signed at (UTC): <b>{signed.Data!.SignedAt:yyyy-MM-dd HH:mm:ss}</b></p>" : "")}
+                </div>";
+                    _logger.LogInformation("About to send email to {Email}", buyerEmail);
+                    await _email.SendEmailAsync(buyerEmail, subject, body);
+                    _logger.LogInformation("Sent email to {Email}", buyerEmail);
+                }
+
+                // (tuỳ chọn) gửi cho seller nữa nếu có:
+                if (!string.IsNullOrWhiteSpace(sellerEmail))
+                {
+                    var subject = $"[EVB] Contract #{signed.Data?.Id} is ACTIVE (Seller copy)";
+                    var body = $@"
+                <div style=""font-family:Arial,Helvetica,sans-serif"">
+                    <h3>Hợp đồng của đơn hàng {orderId} đã Active</h3>
+                    <p>Contract ID: <b>{signed.Data?.Id}</b></p>
+                    <p>Order ID: <b>{orderId}</b></p>
+                    <p>Trạng thái: <b>Active</b></p>
+                </div>";
+                    _logger.LogInformation("About to send email to {Email}", sellerEmail);
+                    await _email.SendEmailAsync(sellerEmail, subject, body);
+                    _logger.LogInformation("Sent email to {Email}", sellerEmail);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Send ACTIVE email failed for order {OrderId}", orderId);
+                // không throw để không ảnh hưởng tới flow chính
+            }
+
             var dto = new OrderAndContractResponse(
                 new OrderMiniDto(fresh!.Id, fresh.Status.ToString()),
                 pay is null ? null : new PaymentMiniDto(pay.Id, pay.Status.ToString(), pay.ProviderTxnId, pay.AmountVnd, pay.PaidAt),
@@ -132,6 +180,45 @@ namespace Services.Implement
                 return new ApiResponse<OrderAndContractResponse> { Success = false, Message = fail.Message ?? "Cannot cancel order" };
 
             var fresh = await _repo.GetByIdAsync(orderId);
+            var emails = await _repo.GetEmailsAsync(orderId, ct);
+            var buyerEmail = emails?.BuyerEmail;
+            var sellerEmail = emails?.SellerEmail;
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(buyerEmail))
+                {
+                    var subject = $"[EVB] Contract #{canceled.Data?.Id} is CANCELLED";
+                    var body = $@"
+                <div style=""font-family:Arial,Helvetica,sans-serif"">
+                    <h3>Hợp đồng đã bị hủy</h3>
+                    <p>Contract ID: <b>{canceled.Data?.Id}</b></p>
+                    <p>Order ID: <b>{orderId}</b></p>
+                    <p>Trạng thái mới: <b>Cancelled</b></p>
+                    {(string.IsNullOrWhiteSpace(reason) ? "" : $"<p>Lý do: {System.Net.WebUtility.HtmlEncode(reason)}</p>")}
+                    {(p != null ? $"<p>Payment: <b>{p.Status}</b></p>" : "")}
+                </div>";
+                    await _email.SendEmailAsync(buyerEmail, subject, body);
+                }
+
+                if (!string.IsNullOrWhiteSpace(sellerEmail))
+                {
+                    var subject = $"[EVB] Contract #{canceled.Data?.Id} is CANCELLED (Seller copy)";
+                    var body = $@"
+                <div style=""font-family:Arial,Helvetica,sans-serif"">
+                    <h3>Hợp đồng của đơn hàng {orderId} đã bị hủy</h3>
+                    <p>Contract ID: <b>{canceled.Data?.Id}</b></p>
+                    <p>Order ID: <b>{orderId}</b></p>
+                    {(string.IsNullOrWhiteSpace(reason) ? "" : $"<p>Lý do: {System.Net.WebUtility.HtmlEncode(reason)}</p>")}
+                    {(p != null ? $"<p>Payment: <b>{p.Status}</b></p>" : "")}
+                </div>";
+                    await _email.SendEmailAsync(sellerEmail, subject, body);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Send CANCELLED email failed for order {OrderId}", orderId);
+            }
+
             var dto = new OrderAndContractResponse(
                 new OrderMiniDto(fresh!.Id, fresh.Status.ToString()),
                 p is null ? null : new PaymentMiniDto(p.Id, p.Status.ToString(), p.ProviderTxnId, p.AmountVnd, p.PaidAt),
