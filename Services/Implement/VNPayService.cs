@@ -157,11 +157,6 @@ public sealed class VNPayService : IVNPayService
             await _paymentRepository.UpdateAsync(payment); // <== chỉ update khi đã tồn tại
         }
 
-        // Cập nhật Order
-        order.Status = OrderStatus.Completed;
-        order.UpdatedAt = DateTime.UtcNow;
-        await _orderRepository.UpdateAsync(order);
-
         return Ok(resp, "IPN processed successfully");
     }
 

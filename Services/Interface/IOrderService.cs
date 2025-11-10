@@ -1,6 +1,7 @@
 ﻿using EVBTradingContract.Common;
 using EVBTradingContract.Request;
 using EVBTradingContract.Response;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +20,7 @@ namespace Services.Interface
         Task<ApiResponse<OrderResponse>> OnPaymentSucceededAsync(Guid orderId, CancellationToken ct = default);
         Task<ApiResponse<OrderResponse>> OnPaymentFailedAsync(Guid orderId, CancellationToken ct = default);
         Task<ApiResponse<OrderAndContractResponse>> ConfirmPaymentSuccessAsync(
-        Guid orderId, CancellationToken ct = default);
+        IQueryCollection query, CancellationToken ct = default);
         Task<ApiResponse<OrderAndContractResponse>> HandleContractAcceptedAsync(Guid orderId, CancellationToken ct = default);
         Task<ApiResponse<OrderAndContractResponse>> HandleContractCancelledAsync(Guid orderId, string? reason, CancellationToken ct = default);
     }

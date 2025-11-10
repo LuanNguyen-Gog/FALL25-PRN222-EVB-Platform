@@ -2,6 +2,7 @@
 using EVBTradingContract.Request;
 using EVBTradingContract.Response;
 using Mapster;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Repositories.Models;
 using Repositories.Repository;
@@ -11,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static Repositories.Enum.Enum;
 
 namespace Services.Implement
@@ -25,8 +27,9 @@ namespace Services.Implement
         private readonly BatteryRepository _batteries;
         private readonly VehicleRepository _vehicles;
         private readonly IEmailService _email;
+        private readonly IVNPayService _vnPay;
 
-        public OrderService(OrderRepository repo, ILogger<OrderService> logger, PaymentRepository payments, IContractService contractService, ListingRepository listings, BatteryRepository batteries, VehicleRepository vehicles, IEmailService email)
+        public OrderService(OrderRepository repo, ILogger<OrderService> logger, PaymentRepository payments, IContractService contractService, ListingRepository listings, BatteryRepository batteries, VehicleRepository vehicles, IEmailService email, IVNPayService vnPay)
         {
             _repo = repo;
             _logger = logger;
@@ -36,57 +39,41 @@ namespace Services.Implement
             _batteries = batteries;
             _vehicles = vehicles;
             _email = email;
+            _vnPay = vnPay;
         }
 
         public async Task<ApiResponse<OrderAndContractResponse>> ConfirmPaymentSuccessAsync(
-        Guid orderId, CancellationToken ct = default)
+        IQueryCollection query, CancellationToken ct = default)
         {
-            // 1) Lấy order + giá listing
-            var order = await _repo.GetByIdAsync(orderId);
-            if (order is null)
-                return new ApiResponse<OrderAndContractResponse> { Success = false, Message = "Order not found" };
+            // 1) Gọi IPN để xác thực & set Payment
+            var ipn = await _vnPay.ProcessIpnAction(query);
+            if (!ipn.Success)
+                return new ApiResponse<OrderAndContractResponse> { Success = false, Message = ipn.Message ?? "Payment failed" };
 
-            var amountVnd = await _repo.GetPrice(orderId, ct);
-      
-            if (amountVnd is null or <= 0)
-                return new ApiResponse<OrderAndContractResponse> { Success = false, Message = "Invalid asset price" };
+            // Lấy orderId từ IPN
+            if (!Guid.TryParse(ipn.Data?.OrderId, out var orderId))
+                return new ApiResponse<OrderAndContractResponse> { Success = false, Message = "Invalid order id" };
 
-            // Upsert Payment = Success
-            var p = await _payments.GetByOrderIdAsync(orderId);
-            if (p is null)
-            {
-                p = new Payment { Id = Guid.NewGuid(), OrderId = orderId, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
-                await _payments.CreateAsync(p, ct);
-            }
-
-            p.ProviderTxnId ??= $"VNP_SANDBOX_{DateTime.UtcNow:yyyyMMddHHmmssfff}";
-            if (amountVnd is > 0) p.AmountVnd = Math.Round(amountVnd.Value, 0);
-
-            p.Method = PaymentMethod.VnPay;
-            p.Status = PaymentStatus.Success; // escrow: giữ tiền
-            p.PaidAt ??= DateTime.UtcNow;
-            p.UpdatedAt = DateTime.UtcNow;
-            await _payments.UpdateAsync(p);
-
-            // Order: Pending -> Processing
-            var change = await OnPaymentSucceededAsync(orderId, ct); // (đã có sẵn) :contentReference[oaicite:3]{index=3}
+            // 2) Chuyển Order → Processing (Pending -> Processing)
+            var change = await OnPaymentSucceededAsync(orderId, ct); // đã có sẵn
             if (!change.Success)
                 return new ApiResponse<OrderAndContractResponse> { Success = false, Message = change.Message ?? "Cannot move to Processing" };
 
-            // Draft contract (chưa có file thì truyền "")
-            var draft = await _contracts.UpsertForOrderAsync(orderId, fileUrl: "", ct); // không để null  :contentReference[oaicite:4]{index=4}
+            // 3) Tạo draft contract
+            var draft = await _contracts.UpsertForOrderAsync(orderId, fileUrl: "", ct);
 
-            var fresh = await _repo.GetByIdAsync(orderId); // dùng _repo, không phải _orders  :contentReference[oaicite:5]{index=5}
+            // 4) Load lại Order/Payment để trả DTO
+            var fresh = await _repo.GetByIdAsync(orderId);
+            var pay = await _payments.GetByOrderIdAsync(orderId);
 
             var dto = new OrderAndContractResponse(
                 new OrderMiniDto(fresh!.Id, fresh.Status.ToString()),
-                new PaymentMiniDto(p.Id, p.Status.ToString(), p.ProviderTxnId, p.AmountVnd, p.PaidAt),
+                pay is null ? null : new PaymentMiniDto(pay.Id, pay.Status.ToString(), pay.ProviderTxnId, pay.AmountVnd, pay.PaidAt),
                 draft.Success && draft.Data is not null
                     ? new ContractMiniDto(draft.Data.Id, draft.Data.Status.ToString() ?? "awaiting_buyer", draft.Data.ContractFileUrl, draft.Data.SignedAt)
                     : null
             );
-
-            return new ApiResponse<OrderAndContractResponse> { Success = true, Message = "Payment confirmed (escrow)", Data = dto };
+            return new ApiResponse<OrderAndContractResponse> { Success = true, Message = "Payment confirmed -> Processing + Drafted", Data = dto };
         }
 
         // Buyer ký thành công -> Completed (Payment giữ Success)
