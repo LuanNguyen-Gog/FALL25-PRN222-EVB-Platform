@@ -57,17 +57,6 @@ namespace EVB_Project.API.Controllers
             var o = await _svc.UpdateStatusAsync(id, newStatus, ct);
             return Ok(o);
         }
-        /// <summary>
-        /// VNPay báo thành công (hoặc FE test): giữ tiền (Success), tạo draft contract, Order -> Processing
-        /// </summary>
-        [HttpPost("{orderId:guid}/payment/success")]
-        [AllowAnonymous] // để IPN hoặc FE test có thể gọi. Muốn khóa lại -> thay bằng [Authorize]
-        public async Task<ActionResult<ApiResponse<OrderAndContractResponse>>> PaymentSuccess(
-            Guid orderId, CancellationToken ct)
-        {
-            var res = await _svc.ConfirmPaymentSuccessAsync(orderId, ct);
-            return res.Success ? Ok(res) : BadRequest(res);
-        }
 
         /// <summary>
         /// Buyer click-to-accept hợp đồng: Order -> Completed, giữ nguyên payment = Success
