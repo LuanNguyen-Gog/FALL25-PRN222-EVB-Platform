@@ -33,48 +33,45 @@ namespace EVB_Project.API.Controllers
             return Ok(res);
         }
 
-        // ❶ CALLBACK: VNPay không hit IPN được thì FE gửi nguyên query vào đây
-        // GET /api/payments/vnpay/callback?...
-        // -> Upsert Payment qua ProcessIpnAction (1 lần duy nhất)
-        [HttpGet("vnpay/callback")]
-        [AllowAnonymous]
-        public async Task<ActionResult<ApiResponse<VNPayReturnResponse>>> VnPayCallback()
-        {
-            var res = await _vnPay.ProcessIpnAction(Request.Query); // chỉ upsert payment
-            return Ok(res);
-        }
-
         [HttpGet("vnpay/return")]
         [AllowAnonymous]
-        public async Task<IActionResult> VnPayReturn(Guid orderId, CancellationToken ct)
+        public async Task<IActionResult> VnPayReturn(CancellationToken ct)
         {
-            // 1. Lấy URL FE + BE
+            // 1️⃣ Lấy base URL cho FE và BE
             var frontendUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:3000";
             var backendUrl = _configuration["Backend:BaseUrl"] ?? "http://localhost:8080/api";
 
-            // 2. Gọi OrderService để check IPN + đổi trạng thái + tạo contract draft
-            var result = await _orderService.ConfirmPaymentSuccessAsync(orderId, ct);
+            // 2️⃣ Xử lý VNPay callback (tự gọi IPN ngay tại đây)
+            var ipnResult = await _vnPay.ProcessIpnAction(Request.Query);
 
-            // 3. Lấy orderId để build contractDownloadUrl
-            var orderIdStr = result.Data?.Order?.Id.ToString() ?? Request.Query["vnp_OrderInfo"].ToString();
+            // 3️⃣ Lấy orderId từ vnp_OrderInfo (VNPay gửi kèm)
+            var orderIdStr = Request.Query["vnp_OrderInfo"].ToString();
             string? contractDownloadUrl = null;
-            if (Guid.TryParse(orderIdStr, out var oid))
-                contractDownloadUrl = $"{backendUrl}/orders/{oid}/contracts/download";
 
-            // 4. Gộp params redirect về FE
+            if (Guid.TryParse(orderIdStr, out var orderId))
+            {
+                // 4️⃣ Nếu IPN xử lý thành công, gọi confirm để tạo contract draft
+                if (ipnResult.Success)
+                {
+                    await _orderService.ConfirmPaymentSuccessAsync(orderId, ct);
+                    contractDownloadUrl = $"{backendUrl}/orders/{orderId}/contracts/download";
+                }
+            }
+
+            // 5️⃣ Gộp các tham số để redirect về FE
             var queryParams = new Dictionary<string, string?>
             {
-                ["success"] = result.Success.ToString().ToLowerInvariant(),
-                ["message"] = result.Message,
+                ["success"] = ipnResult.Success.ToString().ToLowerInvariant(),
+                ["message"] = ipnResult.Message,
                 ["orderId"] = orderIdStr,
                 ["contractDownloadUrl"] = contractDownloadUrl
             };
 
-            var queryString = string.Join("&", queryParams
-                .Where(kv => !string.IsNullOrEmpty(kv.Value))
-                .Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value!)}"));
+            var queryString = string.Join("&",
+                queryParams.Where(kv => !string.IsNullOrEmpty(kv.Value))
+                           .Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value!)}"));
 
-            // 5. Redirect về FE (giữ nguyên /payment/return)
+            // 6️⃣ Redirect về FE (/payment/return)
             var redirectUrl = $"{frontendUrl}/payment/return";
             if (!string.IsNullOrEmpty(queryString))
                 redirectUrl += $"?{queryString}";
