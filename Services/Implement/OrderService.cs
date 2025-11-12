@@ -42,37 +42,31 @@ namespace Services.Implement
             _vnPay = vnPay;
         }
 
-        public async Task<ApiResponse<OrderAndContractResponse>> ConfirmPaymentSuccessAsync(
-        IQueryCollection query, CancellationToken ct = default)
+        public async Task<ApiResponse<OrderAndContractResponse>> ConfirmPaymentSuccessAsync(Guid orderId, CancellationToken ct = default)
         {
-            // 1) Gọi IPN để xác thực & set Payment
-            var ipn = await _vnPay.ProcessIpnAction(query);
-            if (!ipn.Success)
-                return new ApiResponse<OrderAndContractResponse> { Success = false, Message = ipn.Message ?? "Payment failed" };
+            // 1) Kiểm tra Payment theo orderId
+            var pay = await _payments.GetByIdAsync(orderId);
+            if (pay is null || pay.Status != PaymentStatus.Success)
+                return new ApiResponse<OrderAndContractResponse> { Success = false, Message = "Payment not successful yet" };
 
-            // Lấy orderId từ IPN
-            if (!Guid.TryParse(ipn.Data?.OrderId, out var orderId))
-                return new ApiResponse<OrderAndContractResponse> { Success = false, Message = "Invalid order id" };
-
-            // 2) Chuyển Order → Processing (Pending -> Processing)
-            var change = await OnPaymentSucceededAsync(orderId, ct); // đã có sẵn
+            /// 2) Đổi Order → Processing (Pending -> Processing)
+            var change = await OnPaymentSucceededAsync(orderId, ct); // pending -> processing theo state machine
             if (!change.Success)
                 return new ApiResponse<OrderAndContractResponse> { Success = false, Message = change.Message ?? "Cannot move to Processing" };
 
             // 3) Tạo draft contract
             var draft = await _contracts.UpsertForOrderAsync(orderId, fileUrl: "", ct);
 
-            // 4) Load lại Order/Payment để trả DTO
+            // 4) Trả DTO
             var fresh = await _repo.GetByIdAsync(orderId);
-            var pay = await _payments.GetByOrderIdAsync(orderId);
-
             var dto = new OrderAndContractResponse(
                 new OrderMiniDto(fresh!.Id, fresh.Status.ToString()),
-                pay is null ? null : new PaymentMiniDto(pay.Id, pay.Status.ToString(), pay.ProviderTxnId, pay.AmountVnd, pay.PaidAt),
+                new PaymentMiniDto(pay.Id, pay.Status.ToString(), pay.ProviderTxnId, pay.AmountVnd, pay.PaidAt),
                 draft.Success && draft.Data is not null
                     ? new ContractMiniDto(draft.Data.Id, draft.Data.Status.ToString() ?? "awaiting_buyer", draft.Data.ContractFileUrl, draft.Data.SignedAt)
                     : null
             );
+
             return new ApiResponse<OrderAndContractResponse> { Success = true, Message = "Payment confirmed -> Processing + Drafted", Data = dto };
         }
 

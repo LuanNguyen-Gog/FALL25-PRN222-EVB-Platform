@@ -33,16 +33,27 @@ namespace EVB_Project.API.Controllers
             return Ok(res);
         }
 
+        // ❶ CALLBACK: VNPay không hit IPN được thì FE gửi nguyên query vào đây
+        // GET /api/payments/vnpay/callback?...
+        // -> Upsert Payment qua ProcessIpnAction (1 lần duy nhất)
+        [HttpGet("vnpay/callback")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<VNPayReturnResponse>>> VnPayCallback()
+        {
+            var res = await _vnPay.ProcessIpnAction(Request.Query); // chỉ upsert payment
+            return Ok(res);
+        }
+
         [HttpGet("vnpay/return")]
         [AllowAnonymous]
-        public async Task<IActionResult> VnPayReturn(CancellationToken ct)
+        public async Task<IActionResult> VnPayReturn(Guid orderId, CancellationToken ct)
         {
             // 1. Lấy URL FE + BE
             var frontendUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:3000";
             var backendUrl = _configuration["Backend:BaseUrl"] ?? "http://localhost:8080/api";
 
             // 2. Gọi OrderService để check IPN + đổi trạng thái + tạo contract draft
-            var result = await _orderService.ConfirmPaymentSuccessAsync(Request.Query, ct);
+            var result = await _orderService.ConfirmPaymentSuccessAsync(orderId, ct);
 
             // 3. Lấy orderId để build contractDownloadUrl
             var orderIdStr = result.Data?.Order?.Id.ToString() ?? Request.Query["vnp_OrderInfo"].ToString();
